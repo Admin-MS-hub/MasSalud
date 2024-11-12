@@ -191,7 +191,7 @@ export const Image = async (req, res) => {
       const imagePath = req.file.filename; // Obtener el nombre del archivo guardado
 
       // Actualizar la ruta de la imagen en la base de datos
-      const query = 'UPDATE promociones SET imagen = ? WHERE Id = ?';
+      const query = 'UPDATE Promociones SET imagen = ? WHERE Id = ?';
       const [result] = await pool.query(query, [imagePath, Id]);
 
       if (result.affectedRows === 0) {
