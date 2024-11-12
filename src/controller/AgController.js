@@ -278,7 +278,7 @@ export const crearUsuarioYClinica = async (req, res) => {
 
         // Actualizar la base de datos con las nuevas imágenes
         const query = `
-            UPDATE clinicas 
+            UPDATE Clinicas 
             SET ImagoTipo = ?, IsoTipo = ? 
             WHERE Id = ?
         `;
