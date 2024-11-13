@@ -21,7 +21,7 @@ export const GetSubAdmin = async (req, res) => {
 export const GetSubAdministrador = async (req, res) => {
     const { id } = req.params; // Asegúrate de que estás recibiendo el parámetro 'id'
     try {
-        const query = 'SELECT id, dni, nombres, apellidos, telefono, fotoPerfil, correo, contraseña, fechNac, direccion FROM Usuarios WHERE rol_id = 5 AND clinica_id = ?';
+        const query = 'SELECT id, dni, nombres, apellidos, telefono, fotoPerfil, correo, contraseña, fechNac, direccion,Local_id FROM Usuarios WHERE rol_id = 5 AND clinica_id = ?';
         const [subAdmins] = await pool.query(query, [id]); // Consulta con parámetro
 
         if (subAdmins.length === 0) {
