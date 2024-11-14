@@ -24,7 +24,8 @@ export const getPromocionesId = async (req, res) => {
     const query = `
       SELECT 
         Promociones.*, 
-        Clinicas.IsoTipo 
+        Clinicas.IsoTipo,
+        Clinicas.nombre AS nombre_clinica 
       FROM 
         Promociones 
       LEFT JOIN 
