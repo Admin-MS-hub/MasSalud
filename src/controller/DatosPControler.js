@@ -79,7 +79,7 @@ export const getTopPromociones = async (req, res) => {
   };
 
   export const postPromocion = async (req, res) => {
-    const { area, descuento, descripcion, id } = req.body;
+    const { area, descuento, descripcion, clinica_id } = req.body;
 
     // Validación de 'area'
     if (!area || typeof area !== 'string' || area.length > 100) {
@@ -100,7 +100,7 @@ export const getTopPromociones = async (req, res) => {
       const query = `INSERT INTO Promociones (area, descuento, descripcion, clinica_id) 
                      VALUES (?, ?, ?, ?)`;
 
-      const [result] = await pool.query(query, [area, descuento, descripcion, id]);
+      const [result] = await pool.query(query, [area, descuento, descripcion, clinica_id]);
       res.status(201).json({
         message: 'Promoción creada con éxito',
         promocionId: result.insertId
