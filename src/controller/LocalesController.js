@@ -174,7 +174,7 @@ export const Logistica = async (req, res) => {
         }));
 
         const [clinicasLista] = await pool.query('SELECT id, nombre, ruc, IsoTipo FROM Clinicas WHERE id IN (1, 2, 3)');
-        const [promocionesLista] = await pool.query('SELECT id, area, calificacion, imagen FROM promociones WHERE id IN (1, 2, 3)');
+        const [promocionesLista] = await pool.query('SELECT id, area, calificacion, imagen FROM Promociones WHERE id IN (1, 2, 3)');
 
         const total_usuarios = {
             total: [
