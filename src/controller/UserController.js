@@ -494,7 +494,23 @@ export const loginUsuario = async (req, res) => {
         // Generar el token (expiración de 1 hora, puedes modificar el tiempo si lo deseas)
         const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, { expiresIn: '12h' });
 
-        // Responder con éxito, incluyendo los datos del usuario, sus vistas y el token generado
+        // Guarda el Refresh Token en una cookie
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'None',
+            maxAge: 5 * 60 * 1000
+        });
+        // Enviar el Access Token en una cookie HttpOnly
+        res.cookie('accessToken', accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', // Solo en producción, usar https
+            sameSite: 'None'  ,
+            maxAge: 60 * 1000 // 1 minuto
+
+        });
+
+        // Responder con éxito, incluyendo los datos del usuario, sus vistas y el access token generado
         return res.status(200).json({
             success: true,
             usuario: {
@@ -772,7 +788,7 @@ export const refreshToken = async (req, res) => {
         res.cookie('accessToken', newAccessToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production', // Solo en producción, usar https
-            sameSite: 'Strict',
+            sameSite: 'None',
             maxAge: 60 * 1000, // 1 minuto
         });
 
