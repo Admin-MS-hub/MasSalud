@@ -1,10 +1,6 @@
 import multer from "multer";
 import pool from "../database.js";
-import path from 'path';
-import fs from 'fs';
-import jwt from 'jsonwebtoken';  // Importa jsonwebtoken como módulo
-import dotenv from 'dotenv';     // Importa dotenv como módulo
-dotenv.config();  // Cargar las variables de entorno desde el archivo .env
+import jwt from 'jsonwebtoken';
 
 export const crearUsuario = async (req, res) => {
     const {
@@ -236,10 +232,10 @@ export const getUsuarioDatosId = async (req, res) => {
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/'); // Carpeta donde se guardarán las imágenes
+        cb(null, 'uploads/');  // Carpeta donde se guardarán las imágenes
     },
     filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`); // Nombre único
+        cb(null, `${Date.now()}-${file.originalname}`);  // Guardar la imagen con nombre único
     }
 });
 
@@ -248,35 +244,17 @@ export const upload = multer({ storage: storage });
 export const FotoPerfil = async (req, res) => {
     try {
         const Id = req.params.id;
-        const newImagePath = req.file.filename; // Obtener el nuevo nombre del archivo
-
-        // Obtener la ruta de la imagen actual
-        const queryGetImage = 'SELECT fotoPerfil FROM Usuarios WHERE Id = ?';
-        const [rows] = await pool.query(queryGetImage, [Id]);
-
-        if (rows.length === 0) {
-            return res.status(404).json({ message: 'Usuario no encontrado' });
-        }
-
-        const currentImagePath = rows[0].fotoPerfil;
-
-        // Eliminar la imagen anterior si existe
-        if (currentImagePath) {
-            const fullPath = path.join('uploads', currentImagePath);
-            if (fs.existsSync(fullPath)) {
-                fs.unlinkSync(fullPath); // Eliminar el archivo
-            }
-        }
+        const imagePath = req.file.filename;  // Obtener el nombre del archivo guardado
 
         // Actualizar la ruta de la imagen en la base de datos
-        const queryUpdateImage = 'UPDATE Usuarios SET fotoPerfil = ? WHERE Id = ?';
-        const [result] = await pool.query(queryUpdateImage, [newImagePath, Id]);
+        const query = 'UPDATE Usuarios SET fotoPerfil = ? WHERE Id = ?';
+        const [result] = await pool.query(query, [imagePath, Id]);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Usuario no encontrado' });
         }
 
-        res.status(201).json({ fotoPerfil: newImagePath, message: 'Éxito' });
+        res.status(201).json({ fotoPerfil: imagePath, message: 'Éxito' });
     } catch (err) {
         console.error("Error actualizando la imagen de perfil:", err);
         res.status(500).send("Error al actualizar la imagen de perfil");
@@ -422,11 +400,11 @@ export const deleteUsuario = async (req, res) => {
     }
 };
 function generateAccessToken(payload) {
-    return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '6h' });
+    return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1m' });
 }
 
 function generateRefreshToken(payload) {
-    return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: '12h' });
+    return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: '5m' });
 }
 
 export const loginUsuario = async (req, res) => {
@@ -491,8 +469,9 @@ export const loginUsuario = async (req, res) => {
             ...(usuario.clinica_id ? { clinica_id: usuario.clinica_id } : {})
         };
 
-        // Generar el token (expiración de 1 hora, puedes modificar el tiempo si lo deseas)
-        const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, { expiresIn: '12h' });
+        // Generar Access Token y Refresh Token
+        const accessToken = generateAccessToken(tokenPayload);
+        const refreshToken = generateRefreshToken(tokenPayload);
 
         // Guarda el Refresh Token en una cookie
         res.cookie('refreshToken', refreshToken, {
@@ -523,7 +502,7 @@ export const loginUsuario = async (req, res) => {
                 ...(usuario.clinica_id ? { clinica_id: usuario.clinica_id } : {}),
                 vistas: vistas
             },
-            token: token,  // Incluir el token en la respuesta
+            token: accessToken,  // Enviar el accessToken en la respuesta
             message: 'Bienvenido'
         });
 
@@ -532,23 +511,36 @@ export const loginUsuario = async (req, res) => {
         res.status(500).json({ message: 'Error del servidor' });
     }
 };
-export const verificarToken = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
+export const verificarToken = async (req, res, next) => {
+    const { accessToken } = req.cookies;  // Obtenemos el accessToken desde las cookies
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(403).json({ message: 'Token no proporcionado o formato incorrecto' });
-    }
+    if (!accessToken) {
+        // Si no hay accessToken, intentamos renovar el token
+        const tokenRenovado = await refreshToken(req, res);  // Llamamos a refreshToken asincrónicamente
 
-    const token = authHeader.split(' ')[1]; // Extraer el token después de 'Bearer'
-
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-        if (err) {
-            return res.status(401).json({ message: 'Token inválido o expirado',err });
+        if (!tokenRenovado) {
+            return res.status(401).json({ message: 'No autorizado, no se pudo renovar el token' });
         }
-        req.usuario = decoded; // Almacenar la información del usuario en req para usarla en las siguientes rutas
-        next();
-    });
+
+        // Si el token se renovó correctamente, procedemos al siguiente middleware
+        return next();  // Añadimos "return" para evitar que se ejecute código posterior
+    } else {
+        // Si hay un accessToken, verificamos su validez
+        jwt.verify(accessToken, process.env.JWT_SECRET, (err, decoded) => {
+            if (err) {
+                return res.status(401).json({ message: 'Token inválido o expirado', error: err.message });
+            }
+
+            // Si el token es válido, guardamos la información del usuario decodificada en req.usuario
+            req.usuario = decoded;  // Guardamos los datos del usuario decodificados
+            console.log("Usuario verificado:", req.usuario);
+
+            // Continuamos con el siguiente middleware o ruta
+            return next();  // Añadimos "return" aquí para evitar que se ejecute código posterior
+        });
+    }
 };
+
 export const postRol = async (req, res) => {
     try {
         const { nombre } = req.body;
@@ -726,6 +718,11 @@ export const logoutUsuario= async (req, res) => {
 
 
 }
+
+
+
+
+
 export const getAfiliadosPorUsuarioId = async (req, res) => {
     const userId = req.params.id;
     const {
@@ -867,74 +864,6 @@ export const me = async (req, res) => {
     // });
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-//opcional
-// import fs from 'fs';
-// import path from 'path';
-
-// // Configuración de multer para subir imágenes
-// const storage = multer.diskStorage({
-//     destination: (req, file, cb) => {
-//         cb(null, 'uploads/');  // Carpeta donde se guardarán las imágenes
-//     },
-//     filename: (req, file, cb) => {
-//         cb(null, `${Date.now()}-${file.originalname}`);  // Guardar la imagen con nombre único
-//     }
-// });
-
-// export const upload = multer({ storage: storage });
-
-// export const FotoPerfil = async (req, res) => {
-//     try {
-//         const Id = req.params.id;
-
-//         // Obtener la foto actual del usuario
-//         const queryCurrentPhoto = 'SELECT fotoPerfil FROM Usuarios WHERE Id = ?';
-//         const [currentPhotoResult] = await pool.query(queryCurrentPhoto, [Id]);
-
-//         if (currentPhotoResult.length === 0) {
-//             return res.status(404).json({ message: 'Usuario no encontrado' });
-//         }
-
-//         const currentPhotoPath = currentPhotoResult[0].fotoPerfil;
-
-//         // Eliminar la foto anterior del sistema de archivos
-//         if (currentPhotoPath) {
-//             const filePath = path.join(__dirname, 'uploads', currentPhotoPath);
-//             fs.unlink(filePath, (err) => {
-//                 if (err) {
-//                     console.error("Error eliminando la foto anterior:", err);
-//                     // Continuar con la actualización aunque no se pueda eliminar la foto
-//                 }
-//             });
-//         }
-
-//         // Obtener el nombre del nuevo archivo guardado
-//         const newImagePath = req.file.filename;
-
-//         // Actualizar la ruta de la nueva imagen en la base de datos
-//         const queryUpdatePhoto = 'UPDATE Usuarios SET fotoPerfil = ? WHERE Id = ?';
-//         const [updateResult] = await pool.query(queryUpdatePhoto, [newImagePath, Id]);
-
-//         res.status(201).json({ fotoPerfil: newImagePath, message: 'Éxito' });
-//     } catch (err) {
-//         console.error("Error actualizando la imagen de perfil:", err);
-//         res.status(500).send("Error al actualizar la imagen de perfil");
-//     }
-// };
-
 export const crearUsuarioCode = async (req, res) => {
     const {
         correo,
@@ -1035,5 +964,4 @@ export const crearUsuarioCode = async (req, res) => {
         return res.status(500).json({ success: false, message: 'Error al crear el usuario.' });
     }
 };
-
 
