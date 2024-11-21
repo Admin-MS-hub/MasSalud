@@ -19,13 +19,14 @@ import dotenv from 'dotenv';
 const app = express();
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config();
+const corsOptions = {
+    origin: ['https://meticulous-optimism-production.up.railway.app'], // Orígenes permitidos
+    methods: ['OPTIONS', 'GET', 'POST', 'PUT', 'DELETE'], // Métodos HTTP permitidos
+    credentials: true, // Permite enviar cookies y encabezados de autorización
+};
 
-app.use(cors({
-    origin: 'http://localhost:3000',  // Asegúrate de que coincida con tu frontend
-    credentials: true,  // Habilitar el envío de cookies
-}));
-// app.use(compression()); // Añade la compresión aquí
-
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Manejo de preflight
 app.set('views', join(__dirname, 'views'));
 app.engine('hbs', engine({
     defaultLayout: 'main',
@@ -59,3 +60,4 @@ app.use(SubAdmin);
 app.use(express.static(join(__dirname, 'public')));
 
 export default app;
+
