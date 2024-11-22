@@ -78,8 +78,8 @@ export const getTopPromociones = async (req, res) => {
   }
   };
 
-  export const postPromocion = async (req, res) => {
-    const { area, descuento, descripcion, clinica_id } = req.body;
+export const postPromocion = async (req, res) => {
+    const { area, descuento, descripcion, id } = req.body;
 
     // Validación de 'area'
     if (!area || typeof area !== 'string' || area.length > 100) {
@@ -92,15 +92,15 @@ export const getTopPromociones = async (req, res) => {
     }
 
     // Validación de 'descripcion' (opcional, pero recomendado)
-    if (descripcion && typeof descripcion !== 'string') {
-      return res.status(400).json({ message: 'La descripción debe ser un texto válido.' });
-    }
+    // if (descripcion && typeof descripcion !== 'string') {
+    //   return res.status(400).json({ message: 'La descripción debe ser un texto válido.' });
+    // }
 
     try {
-      const query = `INSERT INTO Promociones (area, descuento, descripcion, clinica_id) 
+      const query = `INSERT INTO Promociones (area, descuento, clinica_id) 
                      VALUES (?, ?, ?, ?)`;
 
-      const [result] = await pool.query(query, [area, descuento, descripcion, clinica_id]);
+      const [result] = await pool.query(query, [area, descuento, id]);
       res.status(201).json({
         message: 'Promoción creada con éxito',
         promocionId: result.insertId
