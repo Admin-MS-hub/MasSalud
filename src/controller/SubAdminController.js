@@ -51,7 +51,7 @@ export const GetPaginaHome = async (req, res) => {
             LIMIT 3
         `;
         
-        const IsoTipoQuery = 'SELECT id, IsoTipo FROM Clinicas WHERE IsoTipo IS NOT NULL';
+        const IsoTipoQuery = 'SELECT id, IsoTipo,nombre,direccion,telefonos FROM Clinicas WHERE IsoTipo IS NOT NULL';
         const PromocionesQuery = `SELECT 
                 Promociones.*, 
                 Clinicas.IsoTipo 
