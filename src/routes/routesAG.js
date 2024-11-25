@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { crearUsuarioYClinica, deleteClinica, editClinica, getClinica, postClinica, uploadImages } from "../controller/AgController.js";
+import { crearUsuarioYClinica, deleteClinica, editClinica, getClinica, postClinica, Tarifas, uploadImages, uploadPdf } from "../controller/AgController.js";
 import { upload, verificarToken } from "../controller/UserController.js";
 
 const routerAG = Router();
