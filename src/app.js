@@ -1,7 +1,7 @@
 import express from 'express';
 import { engine } from 'express-handlebars';
 import morgan from 'morgan';
-import { join, dirname } from 'path';
+import path, { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import usuarios from './routes/routes.js';
 import datosPersonales from './routes/RoutesDP.js';
