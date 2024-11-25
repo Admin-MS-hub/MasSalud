@@ -42,6 +42,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Configurar la carpeta uploads como estática
+app.use('/FilePdf', express.static(path.join(__dirname, '../FilePdf')));
 app.use('/uploads', express.static('uploads'));
 
 // Rutas
