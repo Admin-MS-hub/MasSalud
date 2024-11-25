@@ -1,7 +1,10 @@
 import pool from "../database.js";
+import multer from "multer";
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from "url";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const getClinica = async (req, res) => {
     const query = 'SELECT * FROM Clinicas';
   
@@ -326,6 +329,55 @@ export const crearUsuarioYClinica = async (req, res) => {
         console.error("Error al actualizar las imágenes:", err);
         res.status(500).send("Error al actualizar las imágenes");
     }
+};
+
+const uploadFile = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, "../../FilePdf");
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir); // Crear directorio si no existe
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const fileName = `${Date.now()}_${file.originalname}`;
+    cb(null, fileName);
+  },
+});
+
+// Configuración de Multer
+export const uploadPdf = multer({ storage: uploadFile });
+
+export const Tarifas = async (req, res) => {
+  try {
+    // Verificar si se subió un archivo
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const clinicaId = req.params.clinicaId;
+
+    // Construir la ruta del archivo
+    const filePath = path.join("FilePdf", req.file.filename).replace(/\\/g, "/");
+
+    // Actualizar la columna 'tarifario' con la ruta del archivo en la base de datos
+    const query = "UPDATE Clinicas SET tarifario = ? WHERE id = ?";
+    const [results]= await pool.query(query, [filePath, clinicaId]);
+
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: "Clinic not found" });
+    }
+    return res.status(200).json({
+      message: "File uploaded and tarifario updated successfully",
+      filePath: filePath,
+    });
+  } catch (error) {
+    console.error("Unexpected error:", error);
+    res.status(500).json({
+      message: "An unexpected error occurred while processing the request",
+      error: error.message,
+    });
+  }
 };
 
 
