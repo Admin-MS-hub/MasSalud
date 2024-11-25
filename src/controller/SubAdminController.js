@@ -44,7 +44,7 @@ export const GetPaginaHome = async (req, res) => {
 
         // Preparar la respuesta con los resultados de las consultas
         const page = { 
-            IsoTipo,
+           Img: IsoTipo
         };
 
         // Enviar la respuesta al cliente
