@@ -17,6 +17,7 @@ routerAG.post('/Clinica/:id/SubirImagenes', verificarToken, upload.fields([
     { name: 'IsoTipo', maxCount: 1 }     // Imagen tipo
 ]), uploadImages);
 
+routerAG.post('/tarifario/:clinicaId', uploadPdf.single('file'),Tarifas)
 
 routerAG.post('/crearUsuarioYClinica', crearUsuarioYClinica)
 
