@@ -37,14 +37,40 @@ export const GetSubAdministrador = async (req, res) => {
 
 export const GetPaginaHome = async (req, res) => {
     try {
-        const IsoTipoQuery = 'SELECT id, IsoTipo,nombre,direccion,telefonos,tarifario FROM Clinicas WHERE IsoTipo IS NOT NULL';
+        // Consultas individuales
+        const ListatopQuery = `
+            SELECT 
+                Promociones.*, 
+                Clinicas.IsoTipo 
+            FROM 
+                Promociones 
+            LEFT JOIN 
+                Clinicas ON Promociones.clinica_id = Clinicas.id
+            ORDER BY 
+                Promociones.calificacion DESC
+            LIMIT 3
+        `;
+        
+        const IsoTipoQuery = 'SELECT id, IsoTipo,nombre,direccion,telefonos FROM Clinicas WHERE IsoTipo IS NOT NULL';
+        const PromocionesQuery = `SELECT 
+                Promociones.*, 
+                Clinicas.IsoTipo 
+            FROM 
+                Promociones 
+            LEFT JOIN 
+                Clinicas ON Promociones.clinica_id = Clinicas.id
+        `;
 
         // Realizar las consultas
+        const [Listatop] = await pool.query(ListatopQuery);
         const [IsoTipo] = await pool.query(IsoTipoQuery);
+        const [Promociones] = await pool.query(PromocionesQuery);
 
         // Preparar la respuesta con los resultados de las consultas
-        const page = { 
-           Img: IsoTipo
+        const page = {
+            Listatop,
+            Img: IsoTipo,
+            Promociones
         };
 
         // Enviar la respuesta al cliente
