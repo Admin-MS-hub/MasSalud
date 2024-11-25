@@ -284,7 +284,7 @@ export const crearUsuarioYClinica = async (req, res) => {
         // Obtener las rutas actuales de las imágenes desde la base de datos
         const queryGetImages = `
             SELECT ImagoTipo, IsoTipo 
-            FROM clinicas 
+            FROM Clinicas 
             WHERE Id = ?
         `;
         const [rows] = await pool.query(queryGetImages, [id]);
@@ -310,7 +310,7 @@ export const crearUsuarioYClinica = async (req, res) => {
 
         // Actualizar la base de datos con las nuevas imágenes
         const queryUpdateImages = `
-            UPDATE clinicas 
+            UPDATE Clinicas 
             SET ImagoTipo = ?, IsoTipo = ? 
             WHERE Id = ?
         `;
