@@ -947,7 +947,7 @@ export const crearUsuarioCode = async (req, res) => {
         // Query para insertar el nuevo usuario
         const query = `
             INSERT INTO Usuarios (correo, contraseña, nombres, apellidos, dni, estado_civil, rol_id, afiliador_id, fechNac, telefono, direccion, codigo2)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
         // Ejecutar la consulta de inserción
         const [result] = await pool.query(query, [
