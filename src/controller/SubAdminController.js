@@ -81,3 +81,37 @@ export const GetPaginaHome = async (req, res) => {
         res.status(500).json({ message: 'Error al obtener los datos', error });
     }
 };
+
+
+export const Afiliador = async (req, res) => {
+    const { id } = req.params; // Obtener el ID desde los parámetros de la URL
+    const { codigo, rol_id } = req.body; // Obtener el código y rol_id desde el cuerpo de la solicitud
+
+    // Verificar que los parámetros sean válidos
+    if (!id || isNaN(id)) {
+        return res.status(400).json({ message: 'El ID es requerido y debe ser un número.' });
+    }
+
+    if (!codigo || !rol_id) {
+        return res.status(400).json({ message: 'El código y el rol_id son requeridos.' });
+    }
+
+    // Crear la consulta SQL para actualizar el usuario
+    let query = 'UPDATE Usuarios SET codigo = ?, rol_id = ? WHERE id = ?';
+
+    try {
+        // Ejecutar la consulta en la base de datos
+        const [response] = await pool.query(query, [codigo, rol_id, id]);
+
+        // Verificar si se actualizó algún registro
+        if (response.affectedRows === 0) {
+            return res.status(404).json({ message: 'Usuario no encontrado o no se realizaron cambios.' });
+        }
+
+        // Enviar una respuesta exitosa
+        res.status(200).json({ message: 'Usuario actualizado exitosamente', response });
+    } catch (error) {
+        console.error(error); // Registrar el error en la consola
+        res.status(500).json({ message: 'Error al actualizar los datos', error });
+    }
+};
