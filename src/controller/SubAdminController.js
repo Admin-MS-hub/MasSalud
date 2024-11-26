@@ -115,3 +115,50 @@ export const Afiliador = async (req, res) => {
         res.status(500).json({ message: 'Error al actualizar los datos', error });
     }
 };
+
+
+export const Password = async (req, res) => {
+    const { id } = req.params;
+    const { contraseña, newcontraseña } = req.body;
+
+    // Validación de entrada
+    if (!contraseña || !newcontraseña) {
+        return res.status(400).json({ message: 'La contraseña actual y la nueva son requeridas.' });
+    }
+
+    // Validar que la nueva contraseña tenga al menos 6 caracteres
+    if (newcontraseña.length < 6) {
+        return res.status(400).json({ message: 'La nueva contraseña debe tener al menos 6 caracteres.' });
+    }
+
+    try {
+        // Obtener la contraseña actual del usuario desde la base de datos
+        const [user] = await pool.query('SELECT * FROM Usuarios WHERE id = ?', [id]);
+
+        if (user.length === 0) {
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+
+        // Comparar la contraseña antigua con la almacenada en la base de datos
+        if (contraseña !== user[0].contraseña) {
+            return res.status(401).json({ message: 'La contraseña antigua no es correcta' });
+        }
+
+        // Validar que la nueva contraseña no sea igual a la actual
+        if (contraseña === newcontraseña) {
+            return res.status(400).json({ message: 'La nueva contraseña no puede ser igual a la actual.' });
+        }
+
+        // Actualizar la contraseña en la base de datos (sin encriptar)
+        await pool.query('UPDATE Usuarios SET contraseña = ? WHERE id = ?', [newcontraseña, id]);
+
+        return res.status(200).json({
+            message: 'Contraseña cambiada exitosamente',
+            success: true
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error al cambiar la contraseña', error });
+    }
+};
+
