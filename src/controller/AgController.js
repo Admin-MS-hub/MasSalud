@@ -16,6 +16,19 @@ export const getClinica = async (req, res) => {
       res.status(500).json({ message: 'Error al obtener las clínicas' });
     }
   };
+
+  export const getClinicaId = async (req, res) => {
+    const {id} = req.params;
+    const query = 'SELECT * FROM Clinicas WHERE id = ?';
+  
+    try {
+      const [results] = await pool.query(query,[id]);
+      res.status(200).json(results);
+    } catch (err) {
+      console.error('Error al obtener las clínicas:', err);
+      res.status(500).json({ message: 'Error al obtener las clínicas' });
+    }
+  };
   
 export const postClinica = async (req, res) => {
   try {
