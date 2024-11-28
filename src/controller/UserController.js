@@ -579,6 +579,7 @@ export const getUsuarioById = async (req, res) => {
                 u.telefono,
                 u.rol_id,
                 r.nombre AS rol_nombre,
+                u.fecha_inscripcion AS usuario_fecha_inscripcion,
                 a.id AS afiliador_id,
                 af.id AS afiliado_id,
                 af.nombres AS afiliado_nombres,
@@ -587,6 +588,7 @@ export const getUsuarioById = async (req, res) => {
                 af.telefono AS afiliado_telefono,
                 af.rol_id AS afiliado_rol_id,
                 r2.nombre AS afiliado_rol_nombre,
+                af.fecha_inscripcion AS afiliado_fecha_inscripcion,
                 af2.id AS afiliado_nivel_2_id,
                 af2.nombres AS afiliado_nivel_2_nombres,
                 af2.apellidos AS afiliado_nivel_2_apellidos,
@@ -594,13 +596,15 @@ export const getUsuarioById = async (req, res) => {
                 af2.telefono AS afiliado_nivel_2_telefono,
                 af2.rol_id AS afiliado_nivel_2_rol_id,
                 r3.nombre AS afiliado_nivel_2_rol_nombre,
+                af2.fecha_inscripcion AS afiliado_nivel_2_fecha_inscripcion,
                 af3.id AS afiliado_nivel_3_id,
                 af3.nombres AS afiliado_nivel_3_nombres,
                 af3.apellidos AS afiliado_nivel_3_apellidos,
                 af3.dni AS afiliado_nivel_3_dni,
                 af3.telefono AS afiliado_nivel_3_telefono,
                 af3.rol_id AS afiliado_nivel_3_rol_id,
-                r4.nombre AS afiliado_nivel_3_rol_nombre
+                r4.nombre AS afiliado_nivel_3_rol_nombre,
+                af3.fecha_inscripcion AS afiliado_nivel_3_fecha_inscripcion
             FROM 
                 Usuarios u
             LEFT JOIN 
@@ -621,7 +625,6 @@ export const getUsuarioById = async (req, res) => {
                 Roles r4 ON af3.rol_id = r4.id
             WHERE 
                 u.id = ?
-
         `;
 
         const [result] = await pool.query(query, [userId]);
@@ -639,6 +642,13 @@ export const getUsuarioById = async (req, res) => {
         const uniqueIds = new Set(); // To track unique user IDs
 
         result.forEach(item => {
+            // Function to format the date in 'YYYY-MM-DD' format
+            const formatDate = (date) => {
+                if (!date) return null; // Return null if no date is available
+                const d = new Date(date);
+                return d.toISOString().split('T')[0]; // Extract the date part only
+            };
+
             // Check if the user is already in the response
             if (!uniqueIds.has(item.afiliado_id)) {
                 uniqueIds.add(item.afiliado_id);
@@ -650,10 +660,12 @@ export const getUsuarioById = async (req, res) => {
                     dni: item.afiliado_dni,
                     telefono: item.afiliado_telefono,
                     rol: item.afiliado_rol_nombre,
+                    fecha_inscripcion: formatDate(item.afiliado_fecha_inscripcion),  // Format date here
+                    ganancia: 20,  // Ganancia para el nivel 1
                     children: []
                 };
 
-                // Now we populate the children for this afiliado
+                // Now we populate the children for this afiliado (Nivel 2)
                 result.forEach(af2 => {
                     if (af2.afiliado_id === item.afiliado_id && af2.afiliado_nivel_2_id) {
                         const nivel2 = {
@@ -663,10 +675,12 @@ export const getUsuarioById = async (req, res) => {
                             dni: af2.afiliado_nivel_2_dni,
                             telefono: af2.afiliado_nivel_2_telefono,
                             rol: af2.afiliado_nivel_2_rol_nombre,
+                            fecha_inscripcion: formatDate(af2.afiliado_nivel_2_fecha_inscripcion),  // Format date here
+                            ganancia: 10,  // Ganancia para el nivel 2
                             children: []
                         };
 
-                        // Populate the children for nivel 2
+                        // Populate the children for nivel 2 (Nivel 3)
                         result.forEach(af3 => {
                             if (af3.afiliado_id === af2.afiliado_id && af3.afiliado_nivel_3_id) {
                                 nivel2.children.push({
@@ -675,7 +689,9 @@ export const getUsuarioById = async (req, res) => {
                                     apellidos: af3.afiliado_nivel_3_apellidos,
                                     dni: af3.afiliado_nivel_3_dni,
                                     telefono: af3.afiliado_nivel_3_telefono,
-                                    rol: af3.afiliado_nivel_3_rol_nombre
+                                    rol: af3.afiliado_nivel_3_rol_nombre,
+                                    fecha_inscripcion: formatDate(af3.afiliado_nivel_3_fecha_inscripcion),  // Format date here
+                                    ganancia: 5  // Ganancia para el nivel 3
                                 });
                             }
                         });
@@ -695,6 +711,7 @@ export const getUsuarioById = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
 export const logoutUsuario= async (req, res) => {
     try {
         // Eliminar las cookies de acceso y refresco
