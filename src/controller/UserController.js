@@ -633,23 +633,26 @@ export const getUsuarioById = async (req, res) => {
             return res.status(404).json({ message: 'Usuario no encontrado' });
         }
 
+        const user = result[0];
+
         const response = {
-            ganancia_total: 0, // Ganancia total inicializada
             children: []
         };
 
         const uniqueIds = new Set(); // To track unique user IDs
 
         result.forEach(item => {
+            // Function to format the date in 'YYYY-MM-DD' format
             const formatDate = (date) => {
-                if (!date) return null;
+                if (!date) return null; // Return null if no date is available
                 const d = new Date(date);
-                return d.toISOString().split('T')[0];
+                return d.toISOString().split('T')[0]; // Extract the date part only
             };
-        
+
+            // Check if the user is already in the response
             if (!uniqueIds.has(item.afiliado_id)) {
                 uniqueIds.add(item.afiliado_id);
-        
+
                 const afiliado = {
                     id: item.afiliado_id,
                     nombres: item.afiliado_nombres,
@@ -657,12 +660,12 @@ export const getUsuarioById = async (req, res) => {
                     dni: item.afiliado_dni,
                     telefono: item.afiliado_telefono,
                     rol: item.afiliado_rol_nombre,
-                    fecha_inscripcion: formatDate(item.afiliado_fecha_inscripcion),
-                    ganancia: 20,
-                    ganancia_total: 20,
+                    fecha_inscripcion: formatDate(item.afiliado_fecha_inscripcion),  // Format date here
+                    ganancia: 20,  // Ganancia para el nivel 1
                     children: []
                 };
-        
+
+                // Now we populate the children for this afiliado (Nivel 2)
                 result.forEach(af2 => {
                     if (af2.afiliado_id === item.afiliado_id && af2.afiliado_nivel_2_id) {
                         const nivel2 = {
@@ -672,12 +675,12 @@ export const getUsuarioById = async (req, res) => {
                             dni: af2.afiliado_nivel_2_dni,
                             telefono: af2.afiliado_nivel_2_telefono,
                             rol: af2.afiliado_nivel_2_rol_nombre,
-                            fecha_inscripcion: formatDate(af2.afiliado_nivel_2_fecha_inscripcion),
-                            ganancia: 10,
-                            ganancia_total: 10,
+                            fecha_inscripcion: formatDate(af2.afiliado_nivel_2_fecha_inscripcion),  // Format date here
+                            ganancia: 10,  // Ganancia para el nivel 2
                             children: []
                         };
-        
+
+                        // Populate the children for nivel 2 (Nivel 3)
                         result.forEach(af3 => {
                             if (af3.afiliado_id === af2.afiliado_id && af3.afiliado_nivel_3_id) {
                                 nivel2.children.push({
@@ -687,33 +690,25 @@ export const getUsuarioById = async (req, res) => {
                                     dni: af3.afiliado_nivel_3_dni,
                                     telefono: af3.afiliado_nivel_3_telefono,
                                     rol: af3.afiliado_nivel_3_rol_nombre,
-                                    fecha_inscripcion: formatDate(af3.afiliado_nivel_3_fecha_inscripcion),
-                                    ganancia: 5,
-                                    ganancia_total: 5
+                                    fecha_inscripcion: formatDate(af3.afiliado_nivel_3_fecha_inscripcion),  // Format date here
+                                    ganancia: 5  // Ganancia para el nivel 3
                                 });
-        
-                                // Sumar ganancias del nivel 3 al nivel 2
-                                nivel2.ganancia_total += 5;
                             }
                         });
-        
+
                         afiliado.children.push(nivel2);
-                        // Sumar ganancias del nivel 2 al afiliado
-                        afiliado.ganancia_total += nivel2.ganancia_total;
                     }
                 });
-        
+
                 response.children.push(afiliado);
-                // Sumar ganancias del afiliado al total
-                response.ganancia_total += afiliado.ganancia_total;
             }
         });
-        // Send the response back with the total ganancia
-        res.status(200).json([response]);
+
+        res.status(200).json(response.children);
 
     } catch (error) {
         console.error('Error fetching user and affiliates:', error);
-        res.status(500).json({ message: "Error al obtener el usuario" });
+        res.status(500).json({ message: error.message });
     }
 };
 
