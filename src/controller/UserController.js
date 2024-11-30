@@ -777,14 +777,16 @@ export const GetAfiliadorAfiliadores = async (req, res) => {
     try {
         // Consulta a la base de datos para obtener los usuarios con rol_id 3 (Afiliador) y 4 (Afiliado)
         const [usuarios] = await pool.query(
-            `SELECT u.id, u.correo, u.fotoPerfil, u.nombres, u.apellidos, u.dni, u.telefono, r.nombre AS rol
+            `SELECT u.id, u.correo, u.fotoPerfil, u.nombres, u.apellidos, u.dni, u.telefono, u.Estado, r.nombre AS rol
              FROM Usuarios u
              LEFT JOIN Roles r ON u.rol_id = r.id
-             WHERE u.rol_id IN (3, 4)`)
+             WHERE u.rol_id IN (3, 4) AND u.Estado = 'Activo'`
+        );
+
         // Responder con los usuarios encontrados
         return res.status(200).json(usuarios);
     } catch (error) {
-        console.error(error);
+        console.error('Error al obtener los usuarios:', error);
         return res.status(500).json({ message: 'Error al obtener los usuarios' });
     }
 };
