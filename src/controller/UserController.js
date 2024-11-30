@@ -425,6 +425,9 @@ export const loginUsuario = async (req, res) => {
                 u.apellidos, 
                 u.fotoPerfil, 
                 u.clinica_id, 
+                u.Estado,
+                u.EstadoPr,
+                u.codigo,
                 r.nombre AS rol,
                 v.id AS vistaId, 
                 v.nombre AS vistaNombre, 
@@ -465,6 +468,9 @@ export const loginUsuario = async (req, res) => {
             correo: usuario.correo,
             nombres: usuario.nombres,
             apellidos: usuario.apellidos,
+            estado: usuario.Estado,  // Incluyendo el estado
+            estadoPr: usuario.EstadoPr,
+            codigo:usuario.codigo,  // Incluyendo el EstadoPr
             rol: usuario.rol,
             ...(usuario.clinica_id ? { clinica_id: usuario.clinica_id } : {})
         };
@@ -498,6 +504,9 @@ export const loginUsuario = async (req, res) => {
                 nombres: usuario.nombres,
                 apellidos: usuario.apellidos,
                 fotoPerfil: usuario.fotoPerfil,
+                estado: usuario.Estado,  // Incluyendo el estado
+                estadoPr: usuario.EstadoPr, 
+                codigo:usuario.codigo,  // Incluyendo el EstadoPr
                 rol: usuario.rol,
                 ...(usuario.clinica_id ? { clinica_id: usuario.clinica_id } : {}),
                 vistas: vistas
