@@ -822,9 +822,9 @@ export const refreshToken = async (req, res) => {
 };
 export const me = async (req, res) => {
     const user = req.usuario; // Los datos del usuario decodificados desde el JWT
-    // Retornar los datos del usuario
+
     try {
-        // Consultar la base de datos para obtener la información del usuario
+        // Consultar la base de datos para obtener la información del usuario, incluyendo estado, estadoPr y código
         const [rows] = await pool.query(`
             SELECT 
                 u.id AS usuarioId, 
@@ -837,7 +837,10 @@ export const me = async (req, res) => {
                 v.id AS vistaId, 
                 v.nombre AS vistaNombre, 
                 v.logo, 
-                v.ruta
+                v.ruta,
+                u.estado AS estado,  -- Agregar el campo estado
+                u.estadoPr AS estadoPr,  -- Agregar el campo estadoPr
+                u.codigo AS codigo   -- Agregar el campo codigo
             FROM 
                 Usuarios u
             LEFT JOIN 
@@ -863,7 +866,7 @@ export const me = async (req, res) => {
             ruta: row.ruta
         }));
 
-        // Devolver los datos del usuario y las vistas
+        // Devolver los datos del usuario, las vistas, estado, estadoPr y código
         res.status(200).json({
             id: usuario.usuarioId,
             correo: usuario.correo,
@@ -872,6 +875,9 @@ export const me = async (req, res) => {
             fotoPerfil: usuario.fotoPerfil,
             rol: usuario.rol,
             clinica_id: usuario.clinica_id || null, // Si no tiene clínica, poner null
+            estado: usuario.estado || 'No disponible', // Si no tiene estado, poner 'No disponible'
+            estadoPr: usuario.estadoPr || 'No disponible', // Si no tiene estadoPr, poner 'No disponible'
+            codigo: usuario.codigo || 'No disponible', // Si no tiene código, poner 'No disponible'
             vistas: vistas // Devolver las vistas
         });
 
@@ -879,13 +885,6 @@ export const me = async (req, res) => {
         console.error(error);
         res.status(500).json({ message: 'Error al obtener los datos del usuario' });
     }
-    // res.status(200).json({
-
-    //    id:user.id,
-    //     correo: user.correo,
-    //     nombre: user.nombres,
-
-    // });
 }
 
 export const crearUsuarioCode = async (req, res) => {
