@@ -162,3 +162,43 @@ export const Password = async (req, res) => {
     }
 };
 
+const generarCodigo = (dni, nombre, apellido) => {
+    // Tomamos los primeros 2 números del DNI
+    const primerosDni = dni ? dni.substring(0, 2) : '00';
+    
+    // Tomamos las primeras 2 letras del nombre y del apellido
+    const primerasLetrasNombre = nombre ? nombre.substring(0, 2).toUpperCase() : 'NA';
+    const primerasLetrasApellido = apellido ? apellido.substring(0, 2).toUpperCase() : 'NA';
+    
+    // Combinamos todo para formar el código
+    // Aseguramos que el código tenga siempre 8 caracteres
+    let codigo = primerosDni + primerasLetrasNombre + primerasLetrasApellido;
+    
+    // Si el código es menor a 8 caracteres, lo completamos con '0'
+    return codigo.padEnd(8, '0');
+}
+
+export const GenCode = async (req, res) => {
+    const usuarioId = req.params.id;
+    
+    try {
+        // Consultar los datos del usuario en la base de datos
+        const [results] = await pool.query('SELECT dni, nombres, apellidos FROM Usuarios WHERE id = ?', [usuarioId]);
+
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        const usuario = results[0];
+        
+        // Generar el código usando la función
+        const codigo = generarCodigo(usuario.dni, usuario.nombres, usuario.apellidos);
+        
+        // Enviar la respuesta con el código generado
+        return res.json({ codigo });
+    } catch (err) {
+        // Capturar cualquier error y devolver un mensaje de error
+        console.error('Error al obtener datos del usuario:', err);
+        return res.status(500).json({ error: 'Error al obtener datos del usuario' });
+    }
+}
