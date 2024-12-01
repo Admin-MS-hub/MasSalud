@@ -969,14 +969,14 @@ export const crearUsuarioCode = async (req, res) => {
     try {
         // Query para insertar el nuevo usuario
         const query = `
-            INSERT INTO Usuarios (correo, contraseña, nombres, apellidos, dni, estado_civil, rol_id, afiliador_id, fechNac, telefono, direccion, codigo2)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            INSERT INTO Usuarios (correo, contraseña, nombres, apellidos, dni, estado_civil, rol_id, afiliador_id, fechNac, telefono, direccion, codigo2, Estado, EstadoPr)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
         // Ejecutar la consulta de inserción
         const [result] = await pool.query(query, [
             correo, contraseña, nombres, apellidos, dni, estado_civil, rol_id,
-            afiliador_id, fechNac, telefono, direccion, codigo2
-        ]);
+            afiliador_id, fechNac, telefono, direccion, codigo2, 'desactivado', 'desactivado'
+        ]);        
 
         res.status(201).json({ success: true, message: 'Usuario creado con éxito', usuarioId: result.insertId, result });
     } catch (err) {
