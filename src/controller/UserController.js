@@ -933,7 +933,7 @@ export const crearUsuarioCode = async (req, res) => {
     }
 
     // Validar estado civil
-    const estadosCiviles = ['Soltero', 'Casado', 'Divorciado', 'Viudo', 'Separado'];
+    const estadosCiviles = ['soltero', 'casado', 'divorciado', 'viudo'];
     if (estado_civil && !estadosCiviles.includes(estado_civil)) {
         return res.status(400).json({ message: 'Estado civil inválido.' });
     }
