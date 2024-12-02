@@ -163,41 +163,26 @@ export const Password = async (req, res) => {
 };
 
 const generarCodigo = (dni, nombre, apellido) => {
+    // Tomamos los primeros 2 números del DNI
     const primerosDni = dni ? dni.substring(0, 2) : '00';
+    
+    // Tomamos las primeras 2 letras del nombre y del apellido
     const primerasLetrasNombre = nombre ? nombre.substring(0, 2).toUpperCase() : 'NA';
     const primerasLetrasApellido = apellido ? apellido.substring(0, 2).toUpperCase() : 'NA';
     
+    // Combinamos todo para formar el código
+    // Aseguramos que el código tenga siempre 8 caracteres
     let codigo = primerosDni + primerasLetrasNombre + primerasLetrasApellido;
-    return codigo.padEnd(8, '0');
-};
-
-const generarCodigoUnico = async (dni, nombre, apellido, pool) => {
-    let codigo = generarCodigo(dni, nombre, apellido);
     
-    // Consultamos si el código ya existe en la base de datos
-    const [resultados] = await pool.query('SELECT COUNT(*) AS count FROM Usuarios WHERE codigo = ?', [codigo]);
-
-    if (resultados[0].count > 0) {
-        // Si ya existe, generamos uno nuevo con un sufijo (puedes implementar tu propia lógica de generación)
-        let sufijo = 1;
-        let nuevoCodigo;
-        
-        do {
-            nuevoCodigo = `${codigo.substring(0, 6)}${sufijo.toString().padStart(2, '0')}`;
-            sufijo++;
-            const [verificacion] = await pool.query('SELECT COUNT(*) AS count FROM Usuarios WHERE codigo = ?', [nuevoCodigo]);
-        } while (verificacion[0].count > 0);
-        
-        return nuevoCodigo;
-    }
-
-    return codigo;
-};
+    // Si el código es menor a 8 caracteres, lo completamos con '0'
+    return codigo.padEnd(8, '0');
+}
 
 export const GenCode = async (req, res) => {
     const usuarioId = req.params.id;
     
     try {
+        // Consultar los datos del usuario en la base de datos
         const [results] = await pool.query('SELECT dni, nombres, apellidos FROM Usuarios WHERE id = ?', [usuarioId]);
 
         if (results.length === 0) {
@@ -206,13 +191,14 @@ export const GenCode = async (req, res) => {
         
         const usuario = results[0];
         
-        // Generar el código único
-        const codigo = await generarCodigoUnico(usuario.dni, usuario.nombres, usuario.apellidos, pool);
+        // Generar el código usando la función
+        const codigo = generarCodigo(usuario.dni, usuario.nombres, usuario.apellidos);
         
         // Enviar la respuesta con el código generado
         return res.json({ codigo });
     } catch (err) {
+        // Capturar cualquier error y devolver un mensaje de error
         console.error('Error al obtener datos del usuario:', err);
         return res.status(500).json({ error: 'Error al obtener datos del usuario' });
     }
-};
+}
