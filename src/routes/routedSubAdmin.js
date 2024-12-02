@@ -9,6 +9,6 @@ SubRoutes.get('/GetSubAdministrador/:id',verificarToken,GetSubAdministrador);
 SubRoutes.get('/GetPagHome',GetPaginaHome)
 SubRoutes.put('/Afiliador/:id',verificarToken,Afiliador)
 SubRoutes.put('/NewPasword/:id',Password)
-SubRoutes.get('/CodeGenered/:id',verificarToken,GenCode)
+SubRoutes.post('/CodeGenered/:id',verificarToken,GenCode)
 
 export default SubRoutes;
