@@ -162,43 +162,80 @@ export const Password = async (req, res) => {
     }
 };
 
-const generarCodigo = (dni, nombre, apellido) => {
-    // Tomamos los primeros 2 números del DNI
-    const primerosDni = dni ? dni.substring(0, 2) : '00';
-    
-    // Tomamos las primeras 2 letras del nombre y del apellido
-    const primerasLetrasNombre = nombre ? nombre.substring(0, 2).toUpperCase() : 'NA';
-    const primerasLetrasApellido = apellido ? apellido.substring(0, 2).toUpperCase() : 'NA';
-    
-    // Combinamos todo para formar el código
-    // Aseguramos que el código tenga siempre 8 caracteres
-    let codigo = primerosDni + primerasLetrasNombre + primerasLetrasApellido;
-    
-    // Si el código es menor a 8 caracteres, lo completamos con '0'
-    return codigo.padEnd(8, '0');
-}
-
 export const GenCode = async (req, res) => {
-    const usuarioId = req.params.id;
-    
-    try {
-        // Consultar los datos del usuario en la base de datos
-        const [results] = await pool.query('SELECT dni, nombres, apellidos FROM Usuarios WHERE id = ?', [usuarioId]);
+    const { id } = req.params; // Obtener el ID desde los parámetros de la URL
+    const { rol_id } = req.body; // Obtener el rol_id desde el cuerpo de la solicitud
 
-        if (results.length === 0) {
-            return res.status(404).json({ error: 'Usuario no encontrado' });
-        }
-        
-        const usuario = results[0];
-        
-        // Generar el código usando la función
-        const codigo = generarCodigo(usuario.dni, usuario.nombres, usuario.apellidos);
-        
-        // Enviar la respuesta con el código generado
-        return res.json({ codigo });
-    } catch (err) {
-        // Capturar cualquier error y devolver un mensaje de error
-        console.error('Error al obtener datos del usuario:', err);
-        return res.status(500).json({ error: 'Error al obtener datos del usuario' });
+    // Verificar que los parámetros sean válidos
+    if (!id || isNaN(id)) {
+        return res.status(400).json({ message: 'El ID es requerido y debe ser un número.' });
     }
-}
+
+    if (!rol_id) {
+        return res.status(400).json({ message: 'El rol_id es requerido.' });
+    }
+
+    try {
+        // Obtener los datos del usuario (dni, nombres, apellidos)
+        const [usuario] = await pool.query('SELECT dni, nombres, apellidos FROM Usuarios WHERE id = ?', [id]);
+
+        // Si el usuario no existe
+        if (usuario.length === 0) {
+            return res.status(404).json({ message: 'Usuario no encontrado.' });
+        }
+
+        const { dni, nombres, apellidos } = usuario[0];
+
+        // Generar el código inicial basado en dni, nombres y apellidos
+        let codigo = generarCodigo(dni, nombres, apellidos);
+
+        // Verificar si el código ya existe en la base de datos
+        const [verificacion] = await pool.query('SELECT COUNT(*) AS count FROM Usuarios WHERE codigo = ?', [codigo]);
+
+        // Si ya existe, generamos uno nuevo con un número aleatorio en lugar de sufijo secuencial
+        if (verificacion[0].count > 0) {
+            let nuevoCodigo;
+            let verificacionNuevo;
+
+            do {
+                // Generar un número aleatorio para el sufijo
+                const sufijoAleatorio = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+                nuevoCodigo = `${codigo.substring(0, 6)}${sufijoAleatorio}`;
+
+                // Verificamos si el nuevo código ya existe
+                const [verificacionNuevoResult] = await pool.query('SELECT COUNT(*) AS count FROM Usuarios WHERE codigo = ?', [nuevoCodigo]);
+                verificacionNuevo = verificacionNuevoResult[0].count;
+
+            } while (verificacionNuevo > 0); // Continuamos hasta que encontremos un código único
+
+            // Asignar el nuevo código generado
+            codigo = nuevoCodigo;
+        }
+
+        // Actualizamos el usuario con el nuevo código y rol_id
+        const query = 'UPDATE Usuarios SET codigo = ?, rol_id = ? WHERE id = ?';
+        const [response] = await pool.query(query, [codigo, rol_id, id]);
+
+        if (response.affectedRows === 0) {
+            return res.status(404).json({ message: 'No se actualizó ningún usuario. Verifique el ID.' });
+        }
+
+        // Respuesta exitosa
+        res.status(200).json({ message: 'Código y rol actualizados correctamente', codigo });
+
+    } catch (error) {
+        console.error('Error al generar y actualizar código:', error);
+        res.status(500).json({ message: 'Error al generar o actualizar el código', error });
+    }
+};
+
+// Función que genera el código basado en dni, nombres y apellidos
+const generarCodigo = (dni, nombres, apellidos) => {
+    const primerosDni = dni ? dni.substring(0, 3) : '000';
+    const primerasLetrasNombre = nombres ? nombres.substring(0, 2).toUpperCase() : 'NA';
+    const primerasLetrasApellido = apellidos ? apellidos.substring(0, 3).toUpperCase() : 'NA';
+    
+    let codigo = primerosDni + primerasLetrasNombre + primerasLetrasApellido;
+    return codigo.padEnd(8, '0');
+};
+
