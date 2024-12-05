@@ -61,7 +61,7 @@ export const GetSubAdministrador = async (req, res) => {
             LEFT JOIN 
                 Locales l ON u.Local_id = l.id
             WHERE 
-                u.rol_id = 2 AND u.clinica_id = ?
+                u.rol_id = 5 AND u.clinica_id = ?
         `;
         const [subAdmins] = await pool.query(query, [id]); // Consulta con parámetro
 
