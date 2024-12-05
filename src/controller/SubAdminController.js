@@ -4,28 +4,7 @@ import pool from "../database.js";
 export const GetSubAdmin = async (req, res) => {
     const { id } = req.params; // Asegúrate de que estás recibiendo el parámetro 'id'
     try {
-        const query = `
-            SELECT 
-                u.id, 
-                u.dni, 
-                u.nombres, 
-                u.apellidos, 
-                u.telefono, 
-                u.fotoPerfil, 
-                u.correo, 
-                u.contraseña, 
-                u.fechNac, 
-                u.direccion,
-                l.id AS local_id,        -- Añadimos el id del local
-                l.nombre AS local_nombre  -- Añadimos el nombre del local
-            FROM 
-                Usuarios u
-            LEFT JOIN 
-                Locales l ON u.Local_id = l.id
-            WHERE 
-                u.rol_id = 2 AND u.clinica_id = ?
-        `;
-        
+        const query = 'SELECT id, dni, nombres, apellidos, telefono, fotoPerfil, correo, contraseña, fechNac, direccion FROM Usuarios WHERE rol_id = 2 AND clinica_id = ?';
         const [subAdmins] = await pool.query(query, [id]); // Consulta con parámetro
 
         if (subAdmins.length === 0) {
