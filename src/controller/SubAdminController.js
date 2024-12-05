@@ -16,7 +16,8 @@ export const GetSubAdmin = async (req, res) => {
                 u.contraseña, 
                 u.fechNac, 
                 u.direccion,
-                l.nombre AS local_nombre -- Añadimos el nombre del local
+                l.id AS local_id,        -- Añadimos el id del local
+                l.nombre AS local_nombre  -- Añadimos el nombre del local
             FROM 
                 Usuarios u
             LEFT JOIN 
