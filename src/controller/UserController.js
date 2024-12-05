@@ -271,17 +271,11 @@ export const editUsuarioId = async (req, res) => {
         dni,
         estado_civil,
         rol_id,
-        afiliador_id,
         clinica_id,
         fechNac,
         telefono,
         direccion
     } = req.body;
-
-    // Validaciones
-    if (!correo || !contraseña) {
-        return res.status(400).json({ message: 'El correo y la contraseña son obligatorios.' });
-    }
 
     // Validar formato de correo
     const correoRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -289,8 +283,8 @@ export const editUsuarioId = async (req, res) => {
         return res.status(400).json({ message: 'El correo no tiene un formato válido.' });
     }
 
-    // Validar longitud de la contraseña
-    if (contraseña.length < 6) {
+    // Validar longitud de la contraseña si se proporciona
+    if (contraseña && contraseña.length < 6) {
         return res.status(400).json({ message: 'La contraseña debe tener al menos 6 caracteres.' });
     }
 
@@ -319,26 +313,18 @@ export const editUsuarioId = async (req, res) => {
         return res.status(400).json({ message: 'El rol_id debe ser un número.' });
     }
 
-    // Validar afiliador_id
-    if (afiliador_id && isNaN(afiliador_id)) {
-        return res.status(400).json({ message: 'El afiliador_id debe ser un número.' });
-    }
-
     try {
-        // Validar que el afiliador tenga rol_id 3
-        if (afiliador_id) {
-            const afiliadorQuery = 'SELECT rol_id FROM Usuarios WHERE id = ?';
-            const [afiliadorResult] = await pool.query(afiliadorQuery, [afiliador_id]);
+        // Si no se envía una nueva contraseña, se recupera la contraseña actual
+        let updatePassword = contraseña;
 
-            if (afiliadorResult.length === 0) {
-                return res.status(400).json({ message: 'El afiliador no existe.' });
+        if (!contraseña) {
+            // Obtener la contraseña actual del usuario
+            const [userResult] = await pool.query('SELECT contraseña FROM Usuarios WHERE id = ?', [userId]);
+            if (userResult.length === 0) {
+                return res.status(404).json({ message: 'Usuario no encontrado' });
             }
-
-            const afiliadorRol = afiliadorResult[0].rol_id;
-
-            if (afiliadorRol !== 3) {
-                return res.status(400).json({ message: 'No puedes afiliar a otros hasta que pagues el nuevo plan.' });
-            }
+            // Asignar la contraseña actual en caso de que no se haya proporcionado una nueva
+            updatePassword = userResult[0].contraseña;
         }
 
         const sql = `UPDATE Usuarios SET 
@@ -349,23 +335,20 @@ export const editUsuarioId = async (req, res) => {
             dni = ?, 
             estado_civil = ?, 
             rol_id = ?, 
-            afiliador_id = ?,
             clinica_id = ?, 
             fechNac = ?, 
             telefono = ?, 
-            direccion = ?
+            direccion = ? 
             WHERE id = ?`;
 
-        // Nota el cambio en el orden de los parámetros aquí
         const [result] = await pool.query(sql, [
             correo,
-            contraseña,
+            updatePassword, // Usamos la contraseña actual o la nueva, dependiendo de si se envió
             nombres,
             apellidos,
             dni,
             estado_civil,
             rol_id,
-            afiliador_id,
             clinica_id,
             fechNac,
             telefono,
