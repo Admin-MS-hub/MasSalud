@@ -221,3 +221,47 @@ export const Logistica = async (req, res) => {
 };
 
 
+export const ConfigUser = async (req, res) => {
+    const  {id} = req.params;  // El ID del usuario se pasa como parámetro
+    const { correo, telefono, direccion } = req.body;  // Los nuevos datos a actualizar
+
+    // Validaciones
+    if (!correo && !telefono && !direccion) {
+        return res.status(400).json({ message: 'No se proporcionaron datos para actualizar.' });
+    }
+
+    // Verificar teléfono (si se proporciona)
+    if (telefono && !/^\d{7,15}$/.test(telefono)) {
+        return res.status(400).json({ message: 'El teléfono debe ser un número válido entre 7 y 15 dígitos.' });
+    }
+
+    try {
+        // Diagnóstico: Verificar si el ID de usuario es correcto
+        console.log('Intentando actualizar el usuario con ID:', id);
+
+        // Query para actualizar el usuario
+        const query = `
+            UPDATE Usuarios
+            SET
+                correo = ?,
+                telefono = ?,
+                direccion = ?
+            WHERE id = ?`;
+
+        // Ejecutar la consulta de actualización
+        const [result] = await pool.query(query, [correo, telefono, direccion, id]);
+
+        // Diagnóstico: Verificar el resultado de la actualización
+        console.log('Resultado de la actualización:', result);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Usuario no encontrado o no hubo cambios.' });
+        }
+
+        res.status(200).json({ success: true, message: 'Usuario actualizado con éxito.' });
+    } catch (err) {
+        console.error('Error al actualizar el usuario:', err);
+        return res.status(500).json({ message: 'Error al actualizar el usuario.' });
+    }
+};
+
