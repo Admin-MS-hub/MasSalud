@@ -283,7 +283,8 @@ export const editUsuarioId = async (req, res) => {
         clinica_id,
         fechNac,
         telefono,
-        direccion
+        direccion,
+        Local_id
     } = req.body;
 
     // Validar formato de correo
@@ -322,6 +323,16 @@ export const editUsuarioId = async (req, res) => {
         return res.status(400).json({ message: 'El rol_id debe ser un número.' });
     }
 
+    // Validar Local_id
+    if (Local_id && isNaN(Local_id)) {
+        return res.status(400).json({ message: 'El Local_id debe ser un número válido.' });
+    }
+
+    // Validar teléfono
+    if (telefono && (isNaN(telefono) || telefono.toString().length < 7 || telefono.toString().length > 15)) {
+        return res.status(400).json({ message: 'El teléfono debe ser un número válido entre 7 y 15 dígitos.' });
+    }
+
     try {
         // Si no se envía una nueva contraseña, se recupera la contraseña actual
         let updatePassword = contraseña;
@@ -334,6 +345,9 @@ export const editUsuarioId = async (req, res) => {
             }
             // Asignar la contraseña actual en caso de que no se haya proporcionado una nueva
             updatePassword = userResult[0].contraseña;
+        } else {
+            // Aquí puedes agregar la lógica de encriptación de la contraseña si es necesario
+            // Ejemplo: updatePassword = bcrypt.hashSync(contraseña, 10);
         }
 
         const sql = `UPDATE Usuarios SET 
@@ -347,7 +361,8 @@ export const editUsuarioId = async (req, res) => {
             clinica_id = ?, 
             fechNac = ?, 
             telefono = ?, 
-            direccion = ? 
+            direccion = ?,
+            Local_id = ?
             WHERE id = ?`;
 
         const [result] = await pool.query(sql, [
@@ -362,6 +377,7 @@ export const editUsuarioId = async (req, res) => {
             fechNac,
             telefono,
             direccion,
+            Local_id,
             userId // userId debe ser el último
         ]);
 
