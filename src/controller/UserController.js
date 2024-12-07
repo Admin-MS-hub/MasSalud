@@ -931,13 +931,25 @@ export const crearUsuarioCode = async (req, res) => {
         return res.status(400).json({ message: 'El DNI debe ser un número y no puede tener más de 8 dígitos.' });
     }
 
+    // Verificar si el DNI ya está registrado
+    try {
+        const [dniResult] = await pool.query('SELECT id FROM Usuarios WHERE dni = ?', [dni]);
+
+        if (dniResult.length > 0) {
+            return res.status(400).json({ message: 'El DNI ya está registrado en el sistema.' });
+        }
+    } catch (err) {
+        console.error('Error al verificar el DNI:', err);
+        return res.status(500).json({ message: 'Error al verificar el DNI.' });
+    }
+
     // Validar estado civil
     const estadosCiviles = ['soltero', 'casado', 'divorciado', 'viudo'];
     if (estado_civil && !estadosCiviles.includes(estado_civil)) {
         return res.status(400).json({ message: 'Estado civil inválido.' });
     }
 
-    // Validar rol_id
+    // Validar rol_id (opcional, si se requiere más validación aquí, añadirla)
     if (rol_id && isNaN(rol_id)) {
         return res.status(400).json({ message: 'El rol_id debe ser un número.' });
     }
@@ -949,7 +961,7 @@ export const crearUsuarioCode = async (req, res) => {
         try {
             // Buscar si existe un usuario con el mismo código y rol_id = 3 (afiliador)
             const [afiliadorResult] = await pool.query(
-                'SELECT id FROM Usuarios WHERE codigo = ? AND rol_id = 3',
+                'SELECT id FROM Usuarios WHERE codigo2 = ? AND rol_id = 3',
                 [codigo2]
             );
 
@@ -957,7 +969,7 @@ export const crearUsuarioCode = async (req, res) => {
                 // Si encontramos un afiliador con ese código2, asignamos su id al campo afiliador_id
                 afiliador_id = afiliadorResult[0].id;
             } else {
-                console.log('No se encontró un afiliador con el código2 proporcionado.');
+                return res.status(400).json({ message: 'Código2 no corresponde a un afiliador válido.' });
             }
         } catch (err) {
             console.error('Error al verificar el código2 de afiliador:', err);
@@ -973,8 +985,20 @@ export const crearUsuarioCode = async (req, res) => {
 
         // Ejecutar la consulta de inserción
         const [result] = await pool.query(query, [
-            correo, contraseña, nombres, apellidos, dni, estado_civil, rol_id,
-            afiliador_id, fechNac, telefono, direccion, codigo2, 'desactivado', 'desactivado'
+            correo, 
+            contraseña, 
+            nombres, 
+            apellidos, 
+            dni, 
+            estado_civil, 
+            rol_id,
+            afiliador_id, 
+            fechNac, 
+            telefono, 
+            direccion, 
+            codigo2, 
+            'desactivado', // Estado por defecto
+            'desactivado'  // Estado por defecto
         ]);        
 
         res.status(201).json({ success: true, message: 'Usuario creado con éxito', usuarioId: result.insertId, result });
