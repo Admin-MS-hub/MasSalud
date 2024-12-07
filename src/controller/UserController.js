@@ -67,27 +67,36 @@ export const crearUsuario = async (req, res) => {
     }
 
     try {
-        // Validar que el afiliador tenga rol_id 3
-        if (afiliador_id) {
-            const [afiliadorResult] = await pool.query('SELECT rol_id FROM Usuarios WHERE id = ?', [afiliador_id]);
-
-            if (afiliadorResult.length === 0) {
-                return res.status(400).json({ success: false, message: 'El afiliador no existe.' });
-            }
-
-            const afiliadorRol = afiliadorResult[0].rol_id;
-
-            if (afiliadorRol !== 3) {
-                return res.status(400).json({ success: false, message: 'No puedes afiliar a otros hasta que pagues el nuevo plan.' });
-            }
+        // **Validar que el DNI ya esté registrado**
+        const [dniExistente] = await pool.query('SELECT * FROM Usuarios WHERE dni = ?', [dni]);
+        
+        if (dniExistente.length > 0) {
+            return res.status(400).json({ message: 'El DNI ya está registrado.' });
         }
 
+        // // Validar que el afiliador tenga rol_id 3
+        // if (afiliador_id) {
+        //     const [afiliadorResult] = await pool.query('SELECT rol_id FROM Usuarios WHERE id = ?', [afiliador_id]);
+
+        //     if (afiliadorResult.length === 0) {
+        //         return res.status(400).json({ success: false, message: 'El afiliador no existe.' });
+        //     }
+
+        //     const afiliadorRol = afiliadorResult[0].rol_id;
+
+        //     if (afiliadorRol !== 3) {
+        //         return res.status(400).json({ success: false, message: 'No puedes afiliar a otros hasta que pagues el nuevo plan.' });
+        //     }
+        // }
+
+        // Consulta para insertar el nuevo usuario
         const query = `
             INSERT INTO Usuarios (correo, contraseña, nombres, apellidos, dni, estado_civil, rol_id, afiliador_id, clinica_id, Local_id, fechNac, telefono, fotoPerfil, direccion)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
         const [result] = await pool.query(query, [correo, contraseña, nombres, apellidos, dni, estado_civil, rol_id, afiliador_id, clinica_id, Local_id, fechNac, telefono, fotoPerfil, direccion]);
 
+        // Responder con éxito
         res.status(201).json({ success: true, message: 'Usuario creado con éxito', usuarioId: result.insertId });
     } catch (err) {
         console.error('Error al crear el usuario:', err);
