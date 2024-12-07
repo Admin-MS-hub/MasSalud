@@ -152,9 +152,16 @@ export const crearUsuarioYClinica = async (req, res) => {
   const connection = await pool.getConnection();
 
   try {
+    // 1. Verificar si el DNI ya está registrado
+    const [dniExistente] = await connection.query('SELECT * FROM Usuarios WHERE dni = ?', [dni]);
+
+    if (dniExistente.length > 0) {
+      return res.status(400).json({ message: 'El DNI ya está registrado.' });
+    }
+
     await connection.beginTransaction();
 
-    // 1. Insertar la clínica
+    // 2. Insertar la clínica
     const clinicaSql = `
       INSERT INTO Clinicas (nombre, direccion, ruc, ubicacion, telefonos)
       VALUES (?, ?, ?, ?, ?)`;
@@ -169,7 +176,7 @@ export const crearUsuarioYClinica = async (req, res) => {
     // Obtenemos el ID de la clínica insertada
     const clinicaId = clinicaResult.insertId;
 
-    // 2. Insertar el usuario
+    // 3. Insertar el usuario
     const query = `
       INSERT INTO Usuarios (correo, contraseña, nombres, apellidos, dni, estado_civil, rol_id, clinica_id, fechNac, telefono, direccion)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
@@ -195,7 +202,7 @@ export const crearUsuarioYClinica = async (req, res) => {
       success: true,
       message: 'Usuario y clínica creados con éxito.',
       usuarioId: usuarioResult.insertId,
-      clinicaId: usuarioResult,
+      clinicaId: clinicaId, // Corregir esto para que sea el ID de la clínica
     });
   } catch (err) {
     // Si ocurre un error, hacer rollback
