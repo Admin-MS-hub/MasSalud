@@ -391,18 +391,18 @@ function generateRefreshToken(payload) {
 }
 
 export const loginUsuario = async (req, res) => {
-    const { correo, contraseña } = req.body;
+    const { dni, contraseña } = req.body; // Ahora se recibe el DNI en lugar de correo
 
-    if (!correo || !contraseña) {
-        return res.status(400).json({ message: 'Correo y contraseña son requeridos' });
+    if (!dni || !contraseña) {
+        return res.status(400).json({ message: 'DNI y contraseña son requeridos' });
     }
 
     try {
-        // Buscar el usuario por correo y obtener sus datos, junto con las vistas asociadas a su rol
+        // Buscar el usuario por DNI y obtener sus datos, junto con las vistas asociadas a su rol
         const [rows] = await pool.query(`
             SELECT 
                 u.id AS usuarioId, 
-                u.correo, 
+                u.dni,
                 u.contraseña, 
                 u.nombres, 
                 u.apellidos, 
@@ -411,6 +411,9 @@ export const loginUsuario = async (req, res) => {
                 u.Estado,
                 u.EstadoPr,
                 u.codigo,
+                u.direccion,
+                u.telefono,
+                u.rol_id,
                 r.nombre AS rol,
                 v.id AS vistaId, 
                 v.nombre AS vistaNombre, 
@@ -423,18 +426,18 @@ export const loginUsuario = async (req, res) => {
             LEFT JOIN 
                 Vistas v ON r.id = v.rol_id
             WHERE 
-                u.correo = ?;
-        `, [correo]);
+                u.dni = ?; 
+        `, [dni]);
 
         if (rows.length === 0) {
-            return res.status(401).json({ message: 'Correo o contraseña incorrectos' });
+            return res.status(401).json({ message: 'DNI o contraseña incorrectos' });
         }
 
         const usuario = rows[0];
 
         // Comparar la contraseña proporcionada con la almacenada
         if (contraseña !== usuario.contraseña) {
-            return res.status(401).json({ message: 'Correo o contraseña incorrectos' });
+            return res.status(401).json({ message: 'DNI o contraseña incorrectos' });
         }
 
         // Agrupar las vistas en un array de objetos
@@ -448,12 +451,12 @@ export const loginUsuario = async (req, res) => {
         // Crear el payload del token con información relevante del usuario
         const tokenPayload = {
             id: usuario.usuarioId,
-            correo: usuario.correo,
+            dni: usuario.dni,  // Incluyendo el DNI en el token
             nombres: usuario.nombres,
             apellidos: usuario.apellidos,
             estado: usuario.Estado,  // Incluyendo el estado
             estadoPr: usuario.EstadoPr,
-            codigo:usuario.codigo,  // Incluyendo el EstadoPr
+            codigo: usuario.codigo,  // Incluyendo el código
             rol: usuario.rol,
             ...(usuario.clinica_id ? { clinica_id: usuario.clinica_id } : {})
         };
@@ -469,13 +472,13 @@ export const loginUsuario = async (req, res) => {
             sameSite: 'None',
             maxAge: 5 * 60 * 1000
         });
+
         // Enviar el Access Token en una cookie HttpOnly
         res.cookie('accessToken', accessToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production', // Solo en producción, usar https
-            sameSite: 'None'  ,
+            sameSite: 'None',
             maxAge: 60 * 1000 // 1 minuto
-
         });
 
         // Responder con éxito, incluyendo los datos del usuario, sus vistas y el access token generado
@@ -483,14 +486,17 @@ export const loginUsuario = async (req, res) => {
             success: true,
             usuario: {
                 id: usuario.usuarioId,
-                correo: usuario.correo,
+                dni: usuario.dni,  // Incluyendo el DNI en la respuesta
                 nombres: usuario.nombres,
                 apellidos: usuario.apellidos,
                 fotoPerfil: usuario.fotoPerfil,
                 estado: usuario.Estado,  // Incluyendo el estado
-                estadoPr: usuario.EstadoPr, 
-                codigo:usuario.codigo,  // Incluyendo el EstadoPr
+                estadoPr: usuario.EstadoPr,
+                codigo: usuario.codigo,  // Incluyendo el código
                 rol: usuario.rol,
+                rol_id: usuario.rol_id, // Agregado rol_id
+                direccion: usuario.direccion, // Agregado direccion
+                telefono: usuario.telefono, // Agregado telefono
                 ...(usuario.clinica_id ? { clinica_id: usuario.clinica_id } : {}),
                 vistas: vistas
             },
@@ -503,6 +509,7 @@ export const loginUsuario = async (req, res) => {
         res.status(500).json({ message: 'Error del servidor' });
     }
 };
+
 export const verificarToken = async (req, res, next) => {
     const { accessToken } = req.cookies;  // Obtenemos el accessToken desde las cookies
 
