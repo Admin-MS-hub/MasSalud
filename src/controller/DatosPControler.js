@@ -386,16 +386,17 @@ export const getEstadosUser = async (req, res) => {
 export const CambiarEstados = async (req, res) => {
   const { id } = req.params;
   const Estado = 'Activo'; // Asignar el valor 'Activo' directamente
+  const rol_id = '4'
 
   // Validación del ID
   if (!id || isNaN(id)) {
     return res.status(400).json({ message: 'El ID es requerido y debe ser un número.' });
   }
 
-  const query = 'UPDATE Usuarios SET Estado = ? WHERE id = ?';
+  const query = 'UPDATE Usuarios SET Estado = ?, rol_id = ? WHERE id = ?';
   
   try {
-    const [results] = await pool.query(query, [Estado, id]); // Primero el Estado y luego el ID en la query
+    const [results] = await pool.query(query, [Estado,rol_id, id]); // Primero el Estado y luego el ID en la query
     if (results.affectedRows > 0) {
       res.status(200).json({ message: 'Estado actualizado correctamente.' });
     } else {
@@ -411,16 +412,17 @@ export const CambiarEstados = async (req, res) => {
 export const CambiarEstadoPR = async (req, res) => {
   const { id } = req.params;
   const EstadoPr = 'Activo'; // Asignar el valor 'Activo' directamente
+    const rol_id = '3'
 
   // Validación del ID
   if (!id || isNaN(id)) {
     return res.status(400).json({ message: 'El ID es requerido y debe ser un número.' });
   }
 
-  const query = 'UPDATE Usuarios SET EstadoPr = ? WHERE id = ?';
+  const query = 'UPDATE Usuarios SET EstadoPr = ?, rol_id = ? WHERE id = ?';
   
   try {
-    const [results] = await pool.query(query, [EstadoPr, id]); // Primero el Estado y luego el ID en la query
+    const [results] = await pool.query(query, [EstadoPr,rol_id, id]); // Primero el Estado y luego el ID en la query
     if (results.affectedRows > 0) {
       res.status(200).json({ message: 'Estado actualizado correctamente.' });
     } else {
@@ -431,4 +433,5 @@ export const CambiarEstadoPR = async (req, res) => {
     res.status(500).json({ message: 'Error al actualizar el estado.' });
   }
 };
+
 
