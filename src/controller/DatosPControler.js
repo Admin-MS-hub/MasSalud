@@ -361,7 +361,7 @@ export const getFamiliares = async (req, res) => {
 };  
 
 export const getEstadosUser = async (req, res) => {
-  const query = 'SELECT dni, nombres, apellidos,telefono, fecha_inscripcion, Estado, EstadoPr ,rol_id FROM Usuarios WHERE rol_id IN (6,3,4)';
+  const query = 'SELECT id, dni, nombres, apellidos,telefono, fecha_inscripcion, Estado, EstadoPr ,rol_id FROM Usuarios WHERE rol_id IN (6,3,4)';
 
   try {
     const [results] = await pool.query(query);
