@@ -292,3 +292,143 @@ export const Rutas = async (req, res) => {
       res.status(500).json({ message: 'Error al obtener las rutas' });
     }
 }
+
+export const postFamiliares = async (req, res) => {
+  const { dni, nombres, apellidos, parentesco, familiar_id } = req.body;
+
+  // Validation checks
+  if (!dni || !nombres || !apellidos || !parentesco || !familiar_id) {
+    return res.status(400).json({ message: 'Todos los campos son obligatorios.' });
+  }
+
+  if (typeof dni !== 'string' || !/^\d{8,10}$/.test(dni)) {
+    return res.status(400).json({ message: 'El DNI debe ser un número válido de 8 a 10 dígitos.' });
+  }
+
+  if (typeof nombres !== 'string' || nombres.trim().length === 0) {
+    return res.status(400).json({ message: 'El campo "nombres" debe ser una cadena no vacía.' });
+  }
+
+  if (typeof apellidos !== 'string' || apellidos.trim().length === 0) {
+    return res.status(400).json({ message: 'El campo "apellidos" debe ser una cadena no vacía.' });
+  }
+
+  if (typeof parentesco !== 'string' || parentesco.trim().length === 0) {
+    return res.status(400).json({ message: 'El campo "parentesco" debe ser una cadena no vacía.' });
+  }
+
+  // Verifica si familiar_id es un número válido
+  if (isNaN(familiar_id) || !Number.isInteger(Number(familiar_id))) {
+    return res.status(400).json({ message: 'El campo "Familiar_id" debe ser un número entero válido.' });
+  }
+
+  try {
+    // SQL query to insert the familiar into the "Familiares" table
+    const query = `INSERT INTO Familiares (dni, nombres, apellidos, parentesco, familiar_id) 
+                   VALUES (?, ?, ?, ?, ?)`;
+
+    // Ejecutar la consulta con el familiar_id convertido a número
+    const [result] = await pool.query(query, [dni, nombres, apellidos, parentesco, familiar_id]);
+
+    // Responder con éxito
+    res.status(201).json({
+      message: 'Familiar creado con éxito',
+      familiarId: result.insertId  // ID del familiar recién creado
+    });
+  } catch (err) {
+    console.error('Error al crear el familiar:', err);
+    res.status(500).json({ message: 'Error al crear el familiar. Intenta de nuevo más tarde.' });
+  }
+};
+
+export const getFamiliares = async (req, res) => {
+  const { id } = req.params;
+
+  // Validación del ID de la clínica
+  if (!id || isNaN(id)) {
+    return res.status(400).json({ message: 'El ID es requerido y debe ser un número.' });
+  }
+
+  const query = 'SELECT dni, nombres, apellidos, parentesco, estado FROM Familiares WHERE Familiar_id = ?';
+
+  try {
+    const [results] = await pool.query(query, [id]);
+    res.status(200).json(results);
+  } catch (err) {
+    console.error('Error al obtener los Familiares:', err);
+    res.status(500).json({ message: 'Error al obtener los Familiares' });
+  }
+};  
+
+export const getEstadosUser = async (req, res) => {
+  const query = 'SELECT dni, nombres, apellidos,telefono, fecha_inscripcion, Estado, EstadoPr ,rol_id FROM Usuarios WHERE rol_id IN (6,3,4)';
+
+  try {
+    const [results] = await pool.query(query);
+
+    // Modificar el formato de la fecha_inscripcion
+    const formattedResults = results.map(result => {
+      // Convierte la fecha a un formato 'YYYY-MM-DD'
+      const formattedDate = result.fecha_inscripcion.toISOString().split('T')[0];
+      return {
+        ...result,
+        fecha_inscripcion: formattedDate
+      };
+    });
+
+    res.status(200).json(formattedResults);
+  } catch (err) {
+    console.error('Error:', err);
+    res.status(500).json({ message: 'Error al obtener Usuarios' });
+  }
+};
+
+export const CambiarEstados = async (req, res) => {
+  const { id } = req.params;
+  const Estado = 'Activo'; // Asignar el valor 'Activo' directamente
+
+  // Validación del ID
+  if (!id || isNaN(id)) {
+    return res.status(400).json({ message: 'El ID es requerido y debe ser un número.' });
+  }
+
+  const query = 'UPDATE Usuarios SET Estado = ? WHERE id = ?';
+  
+  try {
+    const [results] = await pool.query(query, [Estado, id]); // Primero el Estado y luego el ID en la query
+    if (results.affectedRows > 0) {
+      res.status(200).json({ message: 'Estado actualizado correctamente.' });
+    } else {
+      res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    res.status(500).json({ message: 'Error al actualizar el estado.' });
+  }
+};
+
+
+export const CambiarEstadoPR = async (req, res) => {
+  const { id } = req.params;
+  const EstadoPr = 'Activo'; // Asignar el valor 'Activo' directamente
+
+  // Validación del ID
+  if (!id || isNaN(id)) {
+    return res.status(400).json({ message: 'El ID es requerido y debe ser un número.' });
+  }
+
+  const query = 'UPDATE Usuarios SET EstadoPr = ? WHERE id = ?';
+  
+  try {
+    const [results] = await pool.query(query, [EstadoPr, id]); // Primero el Estado y luego el ID en la query
+    if (results.affectedRows > 0) {
+      res.status(200).json({ message: 'Estado actualizado correctamente.' });
+    } else {
+      res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    res.status(500).json({ message: 'Error al actualizar el estado.' });
+  }
+};
+
