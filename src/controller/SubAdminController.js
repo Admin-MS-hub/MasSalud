@@ -259,3 +259,101 @@ const generarCodigo = (dni, nombres, apellidos) => {
     return codigo.padEnd(8, '0');
 };
 
+
+export const getGananciaTotalGeneral = async (req, res) => {
+    const userId = req.params.id;
+
+    try {
+        const query = `
+            SELECT 
+                u.id AS usuario_id,
+                u.nombres,
+                u.apellidos,
+                u.dni,
+                u.telefono,
+                r.nombre AS rol_nombre,
+                -- Sumar ganancias del primer nivel
+                SUM(CASE WHEN af.id IS NOT NULL THEN 20 ELSE 0 END) +
+                -- Sumar ganancias del segundo nivel
+                SUM(CASE WHEN af2.id IS NOT NULL THEN 10 ELSE 0 END) +
+                -- Sumar ganancias del tercer nivel
+                SUM(CASE WHEN af3.id IS NOT NULL THEN 5 ELSE 0 END) AS ganancia_total_general
+            FROM 
+                Usuarios u
+            LEFT JOIN 
+                Roles r ON u.rol_id = r.id  -- Obtener el nombre del rol
+            LEFT JOIN 
+                Usuarios af ON af.afiliador_id = u.id  -- Primer nivel (afiliados directos)
+            LEFT JOIN 
+                Usuarios af2 ON af2.afiliador_id = af.id  -- Segundo nivel (afiliados de los afiliados)
+            LEFT JOIN 
+                Usuarios af3 ON af3.afiliador_id = af2.id  -- Tercer nivel (afiliados de los afiliados de los afiliados)
+            WHERE 
+                u.id = ?
+            GROUP BY 
+                u.id, u.nombres, u.apellidos, u.dni, u.telefono, r.nombre
+        `;
+
+        const [result] = await pool.query(query, [userId]);
+
+        if (result.length === 0) {
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+
+        const usuario = result[0];
+        const gananciaTotalGeneral = usuario.ganancia_total_general || 0;
+
+        // Responder con los datos del usuario y su ganancia total
+        res.status(200).json({
+            usuario_id: usuario.usuario_id,
+            nombres: usuario.nombres,
+            apellidos: usuario.apellidos,
+            dni: usuario.dni,
+            telefono: usuario.telefono,
+            rol: usuario.rol_nombre,
+            ganancia_total_general: gananciaTotalGeneral
+        });
+
+    } catch (error) {
+        console.error('Error fetching total earnings:', error);
+        res.status(500).json({ message: "Error al obtener la ganancia total" });
+    }
+};
+
+export const GetFamiliares = async (req, res) => {
+    try {
+        const query = ` SELECT * FROM Familiares`;
+        
+        const [response] = await pool.query(query); // Consulta con parámetro
+
+        res.status(200).json(response); // Respuesta exitosa
+    } catch (err) {
+        console.error(err); // Log del error para depuración
+        res.status(500).json({ message: 'Error al obtener los usuarios' }); // Manejo de errores
+    }
+};
+
+
+export const CambiarEstadosFam = async (req, res) => {
+    const { id } = req.params;
+    const Estado = 'Activo'; // Asignar el valor 'Activo' directamente
+  
+    // Validación del ID
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ message: 'El ID es requerido y debe ser un número.' });
+    }
+  
+    const query = 'UPDATE Familiares SET estado = ? WHERE id = ?';
+    
+    try {
+      const [results] = await pool.query(query, [Estado, id]); // Primero el Estado y luego el ID en la query
+      if (results.affectedRows > 0) {
+        res.status(200).json({ message: 'Estado actualizado correctamente.' });
+      } else {
+        res.status(404).json({ message: 'Usuario no encontrado.' });
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      res.status(500).json({ message: 'Error al actualizar el estado.' });
+    }
+  };
