@@ -745,7 +745,7 @@ export const getUsuarioById = async (req, res) => {
         }
 
         // Enviar la respuesta con los datos
-        res.status(200).json([response]);
+        res.status(200).json(response);
 
     } catch (error) {
         console.error('Error fetching user and affiliates:', error);
