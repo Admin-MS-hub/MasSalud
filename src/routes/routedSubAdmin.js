@@ -14,3 +14,5 @@ SubRoutes.post('/CodeGenered/:id',verificarToken,GenCode)
 SubRoutes.get('/GanaciaTotal/:id',verificarToken,getGananciaTotalGeneral)
 SubRoutes.get('/GetFamiliaresGeneral',verificarToken,GetFamiliares)
 SubRoutes.put('/CambioEstadoFam/:id',verificarToken,CambiarEstadosFam)
+
+export default SubRoutes;
