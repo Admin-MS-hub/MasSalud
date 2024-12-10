@@ -259,10 +259,7 @@ const generarCodigo = (dni, nombres, apellidos) => {
     return codigo.padEnd(8, '0');
 };
 
-
 export const getGananciaTotalGeneral = async (req, res) => {
-    const userId = req.params.id;
-
     try {
         const query = `
             SELECT 
@@ -288,35 +285,33 @@ export const getGananciaTotalGeneral = async (req, res) => {
                 Usuarios af2 ON af2.afiliador_id = af.id  -- Segundo nivel (afiliados de los afiliados)
             LEFT JOIN 
                 Usuarios af3 ON af3.afiliador_id = af2.id  -- Tercer nivel (afiliados de los afiliados de los afiliados)
-            WHERE 
-                u.id = ?
             GROUP BY 
                 u.id, u.nombres, u.apellidos, u.dni, u.telefono, r.nombre
         `;
 
-        const [result] = await pool.query(query, [userId]);
+        const [result] = await pool.query(query);
 
         if (result.length === 0) {
-            return res.status(404).json({ message: 'Usuario no encontrado' });
+            return res.status(404).json({ message: 'No se encontraron usuarios' });
         }
 
-        const usuario = result[0];
-        const gananciaTotalGeneral = usuario.ganancia_total_general || 0;
-
-        // Responder con los datos del usuario y su ganancia total
-        res.status(200).json({
+        // Mapear los resultados a un formato adecuado
+        const usuarios = result.map(usuario => ({
             usuario_id: usuario.usuario_id,
             nombres: usuario.nombres,
             apellidos: usuario.apellidos,
             dni: usuario.dni,
             telefono: usuario.telefono,
             rol: usuario.rol_nombre,
-            ganancia_total_general: gananciaTotalGeneral
-        });
+            ganancia_total_general: usuario.ganancia_total_general || 0
+        }));
+
+        // Responder con la lista de usuarios
+        res.status(200).json(usuarios);
 
     } catch (error) {
-        console.error('Error fetching total earnings:', error);
-        res.status(500).json({ message: "Error al obtener la ganancia total" });
+        console.error('Error fetching total earnings for all users:', error);
+        res.status(500).json({ message: "Error al obtener las ganancias totales de los usuarios" });
     }
 };
 
