@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { Afiliador, CambiarEstadosFam, GenCode, GetFamiliares, getGananciaTotalGeneral, GetPaginaHome, GetSubAdmin, GetSubAdministrador, Password } from "../controller/SubAdminController.js";
+import { Afiliador, CambiarEstadosFam, GenCode, GetFamiliares, GetFamiliaresActivos, getGananciaTotalGeneral, GetPaginaHome, GetSubAdmin, GetSubAdministrador, Password } from "../controller/SubAdminController.js";
 import { verificarToken } from "../controller/UserController.js";
 
 
@@ -14,5 +14,6 @@ SubRoutes.post('/CodeGenered/:id',GenCode)
 SubRoutes.get('/GanaciaTotal',verificarToken,getGananciaTotalGeneral)
 SubRoutes.get('/GetFamiliaresGeneral',verificarToken,GetFamiliares)
 SubRoutes.put('/CambioEstadoFam/:id',verificarToken,CambiarEstadosFam)
+SubRoutes.get('/FamiliaresActivos',verificarToken,GetFamiliaresActivos)
 
 export default SubRoutes;
