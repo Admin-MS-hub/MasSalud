@@ -354,3 +354,16 @@ export const CambiarEstadosFam = async (req, res) => {
       res.status(500).json({ message: 'Error al actualizar el estado.' });
     }
   };
+
+  export const GetFamiliaresActivos = async (req, res) => {
+    try {
+        const query = `SELECT * FROM Familiares WHERE estado = 'Activo'`;
+
+        const [response] = await pool.query(query); // Ejecuta la consulta con filtro
+
+        res.status(200).json(response); // Devuelve la respuesta exitosa con los familiares activos
+    } catch (err) {
+        console.error(err); // Log del error para depuración
+        res.status(500).json({ message: 'Error al obtener los familiares activos' }); // Manejo de errores
+    }
+};
