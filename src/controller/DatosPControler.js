@@ -361,7 +361,22 @@ export const getFamiliares = async (req, res) => {
 };  
 
 export const getEstadosUser = async (req, res) => {
-  const query = 'SELECT id, dni, nombres, apellidos,telefono, fecha_inscripcion, Estado, EstadoPr ,rol_id FROM Usuarios WHERE rol_id IN (6,3,4)';
+  const query = `
+    SELECT 
+      u.dni, 
+      u.nombres, 
+      u.apellidos, 
+      u.fecha_inscripcion, 
+      u.Estado, 
+      u.EstadoPr, 
+      r.nombre AS rol_nombre  -- Obtener el nombre del rol
+    FROM 
+      Usuarios u
+    JOIN 
+      Roles r ON u.rol_id = r.id  -- Hacemos el JOIN con la tabla Roles
+    WHERE 
+      u.rol_id IN (6, 3, 4)
+  `;
 
   try {
     const [results] = await pool.query(query);
