@@ -363,6 +363,7 @@ export const getFamiliares = async (req, res) => {
 export const getEstadosUser = async (req, res) => {
   const query = `
     SELECT 
+      u.id,
       u.dni, 
       u.nombres, 
       u.apellidos, 
