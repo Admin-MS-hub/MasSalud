@@ -11,7 +11,7 @@ SubRoutes.get('/GetPagHome',GetPaginaHome)
 SubRoutes.put('/Afiliador/:id',verificarToken,Afiliador)
 SubRoutes.put('/NewPasword/:id',verificarToken,Password)
 SubRoutes.post('/CodeGenered/:id',GenCode)
-SubRoutes.get('/GanaciaTotal/:id',verificarToken,getGananciaTotalGeneral)
+SubRoutes.get('/GanaciaTotal',verificarToken,getGananciaTotalGeneral)
 SubRoutes.get('/GetFamiliaresGeneral',verificarToken,GetFamiliares)
 SubRoutes.put('/CambioEstadoFam/:id',verificarToken,CambiarEstadosFam)
 
