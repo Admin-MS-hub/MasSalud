@@ -7,10 +7,10 @@ const SubRoutes=Router();
 
 SubRoutes.get('/GetSubAdmin/:id',verificarToken,GetSubAdmin);
 SubRoutes.get('/GetSubAdministrador/:id',verificarToken,GetSubAdministrador);
-SubRoutes.get('/GetPagHome',verificarToken,GetPaginaHome)
+SubRoutes.get('/GetPagHome',GetPaginaHome)
 SubRoutes.put('/Afiliador/:id',verificarToken,Afiliador)
 SubRoutes.put('/NewPasword/:id',verificarToken,Password)
-SubRoutes.post('/CodeGenered/:id',verificarToken,GenCode)
+SubRoutes.post('/CodeGenered/:id',GenCode)
 SubRoutes.get('/GanaciaTotal/:id',verificarToken,getGananciaTotalGeneral)
 SubRoutes.get('/GetFamiliaresGeneral',verificarToken,GetFamiliares)
 SubRoutes.put('/CambioEstadoFam/:id',verificarToken,CambiarEstadosFam)
