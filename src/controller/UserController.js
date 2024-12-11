@@ -999,7 +999,7 @@ export const crearUsuarioCode = async (req, res) => {
         try {
             // Buscar si existe un usuario con el mismo código y rol_id = 3 (afiliador)
             const [afiliadorResult] = await pool.query(
-                'SELECT id FROM Usuarios WHERE codigo2 = ? AND rol_id = 3',
+                'SELECT id FROM Usuarios WHERE codigo = ? AND rol_id = 3',
                 [codigo2]
             );
 
@@ -1007,7 +1007,7 @@ export const crearUsuarioCode = async (req, res) => {
                 // Si encontramos un afiliador con ese código2, asignamos su id al campo afiliador_id
                 afiliador_id = afiliadorResult[0].id;
             } else {
-                return res.status(400).json({ message: 'Código2 no corresponde a un afiliador válido.' });
+                return res.status(400).json({ message: 'Código no corresponde a un afiliador válido.' });
             }
         } catch (err) {
             console.error('Error al verificar el código2 de afiliador:', err);
