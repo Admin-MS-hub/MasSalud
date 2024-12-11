@@ -1,6 +1,7 @@
 import multer from "multer";
 import pool from "../database.js";
 import jwt from 'jsonwebtoken';
+import axios from "axios";
 
 export const crearUsuario = async (req, res) => {
     const {
@@ -939,7 +940,7 @@ export const crearUsuarioCode = async (req, res) => {
         codigo2        // Nuevo campo codigo2
     } = req.body;
 
-    // Validaciones
+    // Validaciones iniciales
     if (!correo || !contraseña) {
         return res.status(400).json({ message: 'El correo y la contraseña son obligatorios.' });
     }
@@ -999,7 +1000,7 @@ export const crearUsuarioCode = async (req, res) => {
         try {
             // Buscar si existe un usuario con el mismo código y rol_id = 3 (afiliador)
             const [afiliadorResult] = await pool.query(
-                'SELECT id FROM Usuarios WHERE codigo = ? AND rol_id = 3',
+                'SELECT id FROM Usuarios WHERE codigo2 = ? AND rol_id = 3',
                 [codigo2]
             );
 
@@ -1007,11 +1008,40 @@ export const crearUsuarioCode = async (req, res) => {
                 // Si encontramos un afiliador con ese código2, asignamos su id al campo afiliador_id
                 afiliador_id = afiliadorResult[0].id;
             } else {
-                return res.status(400).json({ message: 'Código no corresponde a un afiliador válido.' });
+                return res.status(400).json({ message: 'Código2 no corresponde a un afiliador válido.' });
             }
         } catch (err) {
             console.error('Error al verificar el código2 de afiliador:', err);
             return res.status(500).json({ success: false, message: 'Error al verificar el código2 del afiliador.' });
+        }
+    }
+
+    // Validación del DNI, nombre y apellido con la API externa
+    if (dni) {
+        try {
+            // Hacer la solicitud a la API externa para obtener los datos del DNI
+            const response = await axios.get(`https://api.perudevs.com/api/v1/dni/simple?document=${dni}&key=cGVydWRldnMucHJvZHVjdGlvbi5maXRjb2RlcnMuNjc1OWM1MWU5ZmE0MTczZjYxMzIwNTY0`);
+
+            // Comprobamos si la API devuelve datos válidos
+            if (response.data && response.data.estado && response.data.estado === true) {
+                const apiNombres = response.data.resultado.nombres;
+                const apiApellidoPaterno = response.data.resultado.apellido_paterno;
+                const apiApellidoMaterno = response.data.resultado.apellido_materno;
+
+                // Comparar los nombres y apellidos con los proporcionados
+                if (
+                    nombres.toLowerCase() !== apiNombres.toLowerCase() ||
+                    !apellidos.toLowerCase().includes(apiApellidoPaterno.toLowerCase()) ||
+                    !apellidos.toLowerCase().includes(apiApellidoMaterno.toLowerCase())
+                ) {
+                    return res.status(400).json({ message: 'El nombre y apellido no coinciden con los datos del DNI.' });
+                }
+            } else {
+                return res.status(400).json({ message: 'No se pudo obtener los datos del DNI.' });
+            }
+        } catch (err) {
+            console.error('Error al validar el DNI con la API externa:', err);
+            return res.status(500).json({ message: 'Error al verificar el DNI con la API externa.' });
         }
     }
 
@@ -1039,7 +1069,7 @@ export const crearUsuarioCode = async (req, res) => {
             'desactivado'  // Estado por defecto
         ]);        
 
-        res.status(201).json({ success: true, message: 'Usuario creado con éxito', usuarioId: result.insertId, result });
+        res.status(201).json({ success: true, message: 'Usuario creado con éxito', usuarioId: result.insertId });
     } catch (err) {
         console.error('Error al crear el usuario:', err);
         if (err.code === 'ER_DUP_ENTRY') {
