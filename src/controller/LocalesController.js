@@ -265,3 +265,27 @@ export const ConfigUser = async (req, res) => {
     }
 };
 
+export const CodigoComprobar = async (req, res) => {
+    const { codigo } = req.body;  // Obtiene el código del cuerpo de la solicitud
+    
+    if (!codigo) {
+      return res.status(400).json({ success: false, message: 'Código no proporcionado' });
+    }
+  
+    try {
+      // Usamos una promesa para la consulta SQL
+      const [results] = await pool.query('SELECT COUNT(*) AS count FROM Usuarios WHERE codigo = ?', [codigo]);
+  
+      // Si el código existe
+      if (results[0].count > 0) {
+        return res.json({ success: true, message: 'Código encontrado' });
+      } else {
+        return res.json({ success: false, message: 'Código no encontrado' });
+      }
+  
+    } catch (err) {
+      // Manejo de error si ocurre en la consulta
+      console.error('Error en la consulta:', err);
+      return res.status(500).json({ success: false, message: 'Error al ejecutar la consulta' });
+    }
+  };
