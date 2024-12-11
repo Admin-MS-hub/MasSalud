@@ -1000,7 +1000,7 @@ export const crearUsuarioCode = async (req, res) => {
         try {
             // Buscar si existe un usuario con el mismo código y rol_id = 3 (afiliador)
             const [afiliadorResult] = await pool.query(
-                'SELECT id FROM Usuarios WHERE codigo2 = ? AND rol_id = 3',
+                'SELECT id FROM Usuarios WHERE codigo = ? AND rol_id = 3',
                 [codigo2]
             );
 
