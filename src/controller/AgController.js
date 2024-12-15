@@ -413,7 +413,7 @@ export const LinkCodigoId = async (req, res) => {
     }
 
     const codigo = results[0].codigo; // Obtener el código del usuario
-    const Link = `https://darkgrey-ostrich-727682.hostingersite.com/Register?ref=${codigo}`;
+    const Link = `https://massalud.org.pe/Register?ref=${codigo}`;
     
     res.status(200).json({ link: Link }); // Enviar el link en la respuesta
   } catch (err) {
@@ -421,3 +421,4 @@ export const LinkCodigoId = async (req, res) => {
     res.status(500).json({ message: 'Error al obtener el código' });
   }
 };
+
