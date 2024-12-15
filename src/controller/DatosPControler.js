@@ -368,6 +368,7 @@ export const getEstadosUser = async (req, res) => {
       u.nombres, 
       u.apellidos, 
       u.fecha_inscripcion, 
+      u.codigo,
       u.Estado, 
       u.EstadoPr, 
       r.nombre AS rol_nombre  -- Obtener el nombre del rol
