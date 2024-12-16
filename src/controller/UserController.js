@@ -429,6 +429,7 @@ export const loginUsuario = async (req, res) => {
             SELECT 
                 u.id AS usuarioId, 
                 u.dni,
+                u.correo,         -- Agregado correo en la consulta
                 u.contraseña, 
                 u.nombres, 
                 u.apellidos, 
@@ -452,7 +453,7 @@ export const loginUsuario = async (req, res) => {
             LEFT JOIN 
                 Vistas v ON r.id = v.rol_id
             WHERE 
-                u.dni = ?; 
+                u.dni = ?;
         `, [dni]);
 
         if (rows.length === 0) {
@@ -478,6 +479,7 @@ export const loginUsuario = async (req, res) => {
         const tokenPayload = {
             id: usuario.usuarioId,
             dni: usuario.dni,  // Incluyendo el DNI en el token
+            correo: usuario.correo,  // Incluyendo el correo en el token
             nombres: usuario.nombres,
             apellidos: usuario.apellidos,
             estado: usuario.Estado,  // Incluyendo el estado
@@ -513,6 +515,7 @@ export const loginUsuario = async (req, res) => {
             usuario: {
                 id: usuario.usuarioId,
                 dni: usuario.dni,  // Incluyendo el DNI en la respuesta
+                correo: usuario.correo,  // Incluyendo el correo en la respuesta
                 nombres: usuario.nombres,
                 apellidos: usuario.apellidos,
                 fotoPerfil: usuario.fotoPerfil,
