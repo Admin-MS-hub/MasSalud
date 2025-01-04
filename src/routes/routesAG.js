@@ -19,7 +19,7 @@ routerAG.post('/Clinica/:id/SubirImagenes', verificarToken, upload.fields([
 
 routerAG.post('/tarifario/:clinicaId', uploadPdf.single('file'),Tarifas)
 
-routerAG.post('/crearUsuarioYClinica', crearUsuarioYClinica)
+routerAG.post('/crearUsuarioYClinica',verificarToken, crearUsuarioYClinica)
 
 routerAG.get('/getClinicaId/:id',verificarToken,getClinicaId)
 
