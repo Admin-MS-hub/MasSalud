@@ -30,7 +30,6 @@ export const GetSubAdministrador = async (req, res) => {
                 u.telefono, 
                 u.fotoPerfil, 
                 u.correo, 
-                u.contraseña, 
                 u.fechNac, 
                 u.direccion,
                 l.id AS local_id,        -- Añadimos el id del local
