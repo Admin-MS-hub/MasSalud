@@ -409,11 +409,11 @@ export const deleteUsuario = async (req, res) => {
     }
 };
 function generateAccessToken(payload) {
-    return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1m' });
+    return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
 }
 
 function generateRefreshToken(payload) {
-    return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: '5m' });
+    return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: '5h' });
 }
 
 export const loginUsuario = async (req, res) => {
@@ -505,7 +505,7 @@ export const loginUsuario = async (req, res) => {
             res.cookie('accessToken', accessToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                maxAge: 1 * 60 * 60 * 1000, // 1 hora
+                maxAge: 5 * 60 * 60 * 1000, // 1 hora
                 sameSite: 'None',
             });
 
