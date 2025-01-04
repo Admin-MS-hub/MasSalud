@@ -496,19 +496,17 @@ export const loginUsuario = async (req, res) => {
         // Guarda el Refresh Token en una cookie
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
-            secure: true, 
+             secure: process.env.NODE_ENV === 'production',
             maxAge: 5 * 60 * 1000,
             sameSite: 'None',
-            domain: '.massalud.org.pe',
         });
 
         // Enviar el Access Token en una cookie HttpOnly
         res.cookie('accessToken', accessToken, {
             httpOnly: true,
-             secure: true,  // Solo en producción, usar https
+             secure: process.env.NODE_ENV === 'production',
             sameSite: 'None',
             maxAge:5 * 60 * 1000, // 1 minuto
-            domain: '.massalud.org.pe',
         });
 
         // Responder con éxito, incluyendo los datos del usuario, sus vistas y el access token generado
@@ -764,16 +762,14 @@ export const logoutUsuario= async (req, res) => {
         // Eliminar las cookies de acceso y refresco
         res.clearCookie('accessToken', {
             httpOnly: true,
-             secure: true, 
+            secure: process.env.NODE_ENV === 'production',
             sameSite: 'None',
-            domain: '.massalud.org.pe',
         });
 
         res.clearCookie('refreshToken', {
             httpOnly: true,
-             secure: true, 
+            secure: process.env.NODE_ENV === 'production',
             sameSite: 'None',
-            domain: '.massalud.org.pe',
         });
 
         // Responder con éxito
@@ -849,10 +845,9 @@ export const refreshToken = async (req, res) => {
 
         res.cookie('accessToken', newAccessToken, {
             httpOnly: true,
-             secure: true,  // Solo en producción, usar https
+              secure: process.env.NODE_ENV === 'production', // Solo en producción, usar https
             sameSite: 'None',
             maxAge: 5* 60 * 1000, // 1 minuto
-            domain: '.massalud.org.pe',
         });
 
         // Retornar un valor para indicar que el token fue renovado
