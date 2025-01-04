@@ -496,17 +496,16 @@ export const loginUsuario = async (req, res) => {
         // Guarda el Refresh Token en una cookie
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            secure: true, 
             maxAge: 5 * 60 * 1000,
             sameSite: 'None',
-             secure: process.env.NODE_ENV === 'production', // Requiere HTTPS
             domain: '.massalud.org.pe',
         });
 
         // Enviar el Access Token en una cookie HttpOnly
         res.cookie('accessToken', accessToken, {
             httpOnly: true,
-             secure: process.env.NODE_ENV === 'production', // Solo en producción, usar https
+             secure: true,  // Solo en producción, usar https
             sameSite: 'None',
             maxAge:5 * 60 * 1000, // 1 minuto
             domain: '.massalud.org.pe',
@@ -765,14 +764,14 @@ export const logoutUsuario= async (req, res) => {
         // Eliminar las cookies de acceso y refresco
         res.clearCookie('accessToken', {
             httpOnly: true,
-             secure: process.env.NODE_ENV === 'production',
+             secure: true, 
             sameSite: 'None',
             domain: '.massalud.org.pe',
         });
 
         res.clearCookie('refreshToken', {
             httpOnly: true,
-             secure: process.env.NODE_ENV === 'production',
+             secure: true, 
             sameSite: 'None',
             domain: '.massalud.org.pe',
         });
@@ -850,7 +849,7 @@ export const refreshToken = async (req, res) => {
 
         res.cookie('accessToken', newAccessToken, {
             httpOnly: true,
-             secure: process.env.NODE_ENV === 'production', // Solo en producción, usar https
+             secure: true,  // Solo en producción, usar https
             sameSite: 'None',
             maxAge: 5* 60 * 1000, // 1 minuto
             domain: '.massalud.org.pe',
