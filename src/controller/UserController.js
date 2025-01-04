@@ -493,21 +493,21 @@ export const loginUsuario = async (req, res) => {
         const accessToken = generateAccessToken(tokenPayload);
         const refreshToken = generateRefreshToken(tokenPayload);
 
-        // Guarda el Refresh Token en una cookie
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-             secure: process.env.NODE_ENV === 'production',
-            maxAge: 5 * 60 * 1000,
-            sameSite: 'None',
-        });
-
-        // Enviar el Access Token en una cookie HttpOnly
-        res.cookie('accessToken', accessToken, {
-            httpOnly: true,
-             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'None',
-            maxAge:5 * 60 * 1000, // 1 minuto
-        });
+        // Configuración para el refreshToken (5 horas)
+            res.cookie('refreshToken', refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 5 * 60 * 60 * 1000, // 5 horas
+                sameSite: 'None',
+            });
+            
+            // Configuración para el accessToken (1 hora)
+            res.cookie('accessToken', accessToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 1 * 60 * 60 * 1000, // 1 hora
+                sameSite: 'None',
+            });
 
         // Responder con éxito, incluyendo los datos del usuario, sus vistas y el access token generado
         return res.status(200).json({
@@ -845,9 +845,9 @@ export const refreshToken = async (req, res) => {
 
         res.cookie('accessToken', newAccessToken, {
             httpOnly: true,
-              secure: process.env.NODE_ENV === 'production', // Solo en producción, usar https
+            secure: process.env.NODE_ENV === 'production', // Solo en producción, usar https
             sameSite: 'None',
-            maxAge: 5* 60 * 1000, // 1 minuto
+            maxAge: 1 * 60 * 60 * 1000, // 1 hora
         });
 
         // Retornar un valor para indicar que el token fue renovado
