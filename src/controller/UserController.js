@@ -1053,7 +1053,8 @@ export const crearUsuarioCode = async (req, res) => {
         // Query para insertar el nuevo usuario
         const query = `
             INSERT INTO Usuarios (correo, contraseña, nombres, apellidos, dni, estado_civil, rol_id, afiliador_id, fechNac, telefono, direccion, codigo2, Estado, EstadoPr)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
 
         // Ejecutar la consulta de inserción
         const [result] = await pool.query(query, [
@@ -1073,6 +1074,19 @@ export const crearUsuarioCode = async (req, res) => {
             'desactivado'  // Estado por defecto
         ]);        
 
+        // Si el afiliador_id existe, generar una notificación con el nombre y apellido del usuario nuevo
+        if (afiliador_id) {
+            const mensaje = `¡Nuevo usuario registrado! Nombre: ${nombres} ${apellidos}`;
+
+            const notificacionQuery = `
+                INSERT INTO Notificaciones (mensaje, usuario_id)
+                VALUES (?, ?)
+            `;
+
+            // Insertar la notificación para el afiliador
+            await pool.query(notificacionQuery, [mensaje, afiliador_id]);
+        }
+
         res.status(201).json({ success: true, message: 'Usuario creado con éxito', usuarioId: result.insertId });
     } catch (err) {
         console.error('Error al crear el usuario:', err);
@@ -1080,5 +1094,34 @@ export const crearUsuarioCode = async (req, res) => {
             return res.status(400).json({ success: false, message: 'El correo ya está en uso.' });
         }
         return res.status(500).json({ success: false, message: 'Error al crear el usuario.' });
+    }
+};
+
+export const Notificaciones = async (req, res) => {
+    try {
+        const { usuarioId } = req.params;
+
+        // Obtener las notificaciones más recientes (3), ordenadas por fecha
+        const [notificaciones] = await pool.query(
+            'SELECT id, mensaje, usuario_id, fecha, estado FROM Notificaciones WHERE usuario_id = ? ORDER BY fecha DESC LIMIT 3',
+            [usuarioId]
+        );
+
+        // Formatear la fecha de cada notificación para que sea solo "YYYY-MM-DD"
+        const notificacionesFormateadas = notificaciones.map(notification => {
+            const fecha = new Date(notification.fecha);
+            // Obtener el formato "YYYY-MM-DD"
+            const fechaFormateada = fecha.toISOString().split('T')[0];
+            return {
+                ...notification,
+                fecha: fechaFormateada
+            };
+        });
+
+        // Enviar las notificaciones con la fecha formateada
+        res.status(200).json(notificacionesFormateadas);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error al obtener notificaciones' });
     }
 };
