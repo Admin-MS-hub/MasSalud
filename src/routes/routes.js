@@ -2,13 +2,14 @@ import { Router } from "express";
 import {
     deleteUsuario, editUsuarioId, getUsuario, loginUsuario, postRol, crearUsuario, getUsuariosId, getUsuarioById,
     getAfiliadosPorUsuarioId, getUsuarioDatosId, FotoPerfil, upload, GetAfiliadorAfiliadores, verificarToken, crearUsuarioCode,
-    refreshToken,me,logoutUsuario
+    refreshToken,me,logoutUsuario,
+    Notificaciones
 } from "../controller/UserController.js";
 
 const router = Router();
 
 // Crear un nuevo usuario
-router.post('/CreateUsuario', crearUsuario);
+router.post('/CreateUsuario', verificarToken, crearUsuario);
 
 // Obtener lista de usuarios
 router.get('/list', verificarToken, getUsuario);
@@ -36,6 +37,8 @@ router.put('/CambioRol/:id', verificarToken, getAfiliadosPorUsuarioId);
 router.post('/Usuario/:id/uploadProfileImage', verificarToken, upload.single('image'), FotoPerfil);
 
 router.get('/afiliadores-afiliados', verificarToken, GetAfiliadorAfiliadores);
+
+router.get('/notificaciones/:usuarioId', verificarToken,Notificaciones)
 
 router.post('/UserCode', crearUsuarioCode)
 router.post('/refresh-token',refreshToken)
