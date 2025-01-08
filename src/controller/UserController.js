@@ -1103,7 +1103,7 @@ export const Notificaciones = async (req, res) => {
 
         // Obtener las notificaciones más recientes (3), ordenadas por fecha
         const [notificaciones] = await pool.query(
-            'SELECT id, mensaje, usuario_id, fecha, estado FROM Notificaciones WHERE usuario_id = ? ORDER BY fecha DESC LIMIT 3',
+            'SELECT * FROM Notificaciones WHERE es_global = TRUE OR usuario_id = ?',
             [usuarioId]
         );
 
@@ -1125,3 +1125,18 @@ export const Notificaciones = async (req, res) => {
         res.status(500).json({ message: 'Error al obtener notificaciones' });
     }
 };
+
+
+export const CreateMensagge = async (req, res) => {
+    const { mensaje } = req.body;
+
+    try {
+        // Crear notificación global
+        await pool.query('INSERT INTO Notificaciones (mensaje, es_global) VALUES (?, ?)', [mensaje, true]);
+
+        res.status(200).send({ message: 'Notificación global enviada exitosamente' });
+    } catch (error) {
+        res.status(500).send({ error: 'Error al enviar notificación global' });
+    }
+};
+
