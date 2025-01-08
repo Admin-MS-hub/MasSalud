@@ -3,7 +3,8 @@ import {
     deleteUsuario, editUsuarioId, getUsuario, loginUsuario, postRol, crearUsuario, getUsuariosId, getUsuarioById,
     getAfiliadosPorUsuarioId, getUsuarioDatosId, FotoPerfil, upload, GetAfiliadorAfiliadores, verificarToken, crearUsuarioCode,
     refreshToken,me,logoutUsuario,
-    Notificaciones
+    Notificaciones,
+    CreateMensagge
 } from "../controller/UserController.js";
 
 const router = Router();
@@ -38,7 +39,9 @@ router.post('/Usuario/:id/uploadProfileImage', verificarToken, upload.single('im
 
 router.get('/afiliadores-afiliados', verificarToken, GetAfiliadorAfiliadores);
 
-router.get('/notificaciones/:usuarioId', verificarToken,Notificaciones)
+router.get('/notificaciones/:usuarioId',Notificaciones)
+
+router.post('/CreateNotificaciones', CreateMensagge)
 
 router.post('/UserCode', crearUsuarioCode)
 router.post('/refresh-token',refreshToken)
