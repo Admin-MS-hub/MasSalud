@@ -1087,6 +1087,14 @@ export const crearUsuarioCode = async (req, res) => {
             await pool.query(notificacionQuery, [mensaje, afiliador_id]);
         }
 
+        // Notificación de bienvenida al nuevo usuario
+        const mensajeBienvenida = `¡Bienvenido a MasSalud, ${nombres} ${apellidos}!`;
+        await pool.query('INSERT INTO Notificaciones (mensaje, usuario_id) VALUES (?, ?)', [mensajeBienvenida, result.insertId]);
+
+        // Notificación de confirmación de correo al nuevo usuario
+        const mensajeConfirmacionCorreo = 'Por favor, confirma tu correo para activar tu cuenta.';
+        await pool.query('INSERT INTO Notificaciones (mensaje, usuario_id) VALUES (?, ?)', [mensajeConfirmacionCorreo, result.insertId]);
+
         res.status(201).json({ success: true, message: 'Usuario creado con éxito', usuarioId: result.insertId });
     } catch (err) {
         console.error('Error al crear el usuario:', err);

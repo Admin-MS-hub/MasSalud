@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { crearUsuarioYClinica, deleteClinica, editClinica, getClinica, getClinicaId, LinkCodigoId, postClinica, Tarifas, uploadImages, uploadPdf } from "../controller/AgController.js";
+import { cambiarContrasena, crearUsuarioYClinica, deleteClinica, editClinica, enviarCodigoCorreo, getClinica, getClinicaId, LinkCodigoId, postClinica, solicitarRecuperacionCuenta, Tarifas, uploadImages, uploadPdf, verificarCodigo, verificarCodigoRecuperacion } from "../controller/AgController.js";
 import { upload, verificarToken } from "../controller/UserController.js";
 
 const routerAG = Router();
@@ -24,5 +24,20 @@ routerAG.post('/crearUsuarioYClinica',verificarToken, crearUsuarioYClinica)
 routerAG.get('/getClinicaId/:id',verificarToken,getClinicaId)
 
 routerAG.get('/LinkCodigo/:id', verificarToken,LinkCodigoId)
+
+// Ruta para enviar el código
+routerAG.post('/enviar-codigo', enviarCodigoCorreo);
+
+// Ruta para verificar el código
+routerAG.post('/verificar-codigo', verificarCodigo);
+
+// Ruta para solicitar la recuperación de cuenta
+routerAG.post('/solicitar-recuperacion', solicitarRecuperacionCuenta);
+
+// Ruta para verificar el código de recuperación
+routerAG.post('/verificar-codigo-recuperacion', verificarCodigoRecuperacion);
+
+// Ruta para cambiar la contraseña
+routerAG.post('/cambiar-contrasena', cambiarContrasena);
 
 export default routerAG;

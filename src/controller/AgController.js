@@ -3,6 +3,7 @@ import multer from "multer";
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from "url";
+import nodemailer from "nodemailer"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const getClinica = async (req, res) => {
@@ -422,3 +423,230 @@ export const LinkCodigoId = async (req, res) => {
   }
 };
 
+const transporter = nodemailer.createTransport({
+  service: "Gmail", 
+  auth: {
+    user: "dgst1704@gmail.com", 
+    pass: "kkvw sapm vyzm fcdj", 
+  },
+  tls: {
+    rejectUnauthorized: false, 
+  },
+});
+
+function generarCodigo() {
+  const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let codigo = '';
+  for (let i = 0; i < 6; i++) {
+    codigo += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+  }
+  return codigo;
+}
+
+export const enviarCodigoCorreo = async (req, res) => {
+  const { usuario_id, destinatario } = req.body; // Asumimos que el destinatario es el correo del usuario
+
+  if (!usuario_id || !destinatario) {
+    return res.status(400).json({ error: "Faltan datos: usuario_id o destinatario" });
+  }
+
+  // Generar el código de confirmación
+  const codigo = generarCodigo();
+
+  // Almacenar el código en la base de datos
+  const expiracion = new Date(Date.now() + 24 * 60 * 60 * 1000); // El código expira en 24 horas
+  try {
+    await pool.query(
+      'INSERT INTO ConfirmacionesCorreo (usuario_id, token, expiracion) VALUES (?, ?, ?)',
+      [usuario_id, codigo, expiracion]
+    );
+
+    // Configuración del correo
+    const mailOptions = {
+      from: "dgst1704@gmail.com", // Tu dirección de correo
+      to: destinatario,            // Correo del destinatario
+      subject: "Código de Confirmación", // Asunto
+      text: `Tu código de confirmación es: ${codigo}`, // Cuerpo del mensaje
+    };
+
+    // Enviar el correo
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({ message: "Correo enviado correctamente con el código de confirmación" });
+  } catch (error) {
+    console.error("Error al enviar el correo:", error);
+    res.status(500).json({ error: "No se pudo enviar el correo o almacenar el código en la base de datos" });
+  }
+};
+
+export const verificarCodigo = async (req, res) => {
+  const { usuario_id, codigo_ingresado } = req.body; // El código que el usuario ingresa
+
+  if (!usuario_id || !codigo_ingresado) {
+    return res.status(400).json({ error: "Faltan datos: usuario_id o codigo_ingresado" });
+  }
+
+  try {
+    // Buscar el código almacenado en la base de datos
+    const [result] = await pool.query(
+      'SELECT * FROM ConfirmacionesCorreo WHERE usuario_id = ? AND token = ? AND confirmado = FALSE',
+      [usuario_id, codigo_ingresado]
+    );
+
+    if (result.length === 0) {
+      return res.status(400).json({ error: "Código no válido o ya confirmado" });
+    }
+
+    const confirmacion = result[0];
+
+    // Verificar si el código ha expirado
+    const now = new Date();
+    if (now > new Date(confirmacion.expiracion)) {
+      return res.status(400).json({ error: "El código ha expirado" });
+    }
+
+    // Marcar el código como confirmado
+    await pool.query('UPDATE ConfirmacionesCorreo SET confirmado = TRUE WHERE id = ?', [confirmacion.id]);
+
+    res.status(200).json({ message: "Código confirmado correctamente" });
+  } catch (error) {
+    console.error("Error al verificar el código:", error);
+    res.status(500).json({ error: "No se pudo verificar el código" });
+  }
+};
+
+export const solicitarRecuperacionCuenta = async (req, res) => {
+  const { correo } = req.body;
+
+  if (!correo) {
+    return res.status(400).json({ error: "Falta el correo electrónico" });
+  }
+
+  try {
+    // Verificar si el correo existe en la base de datos
+    const [result] = await pool.query('SELECT id FROM Usuarios WHERE correo = ?', [correo]);
+
+    if (result.length === 0) {
+      return res.status(404).json({ error: "Correo no encontrado" });
+    }
+
+    const usuario_id = result[0].id;
+
+    // Generar un token único para la recuperación
+    const token = generarCodigo(); // Un token seguro para la recuperación
+    const expiracion = new Date(Date.now() + 15 * 60 * 1000); // El token expira en 15 minutos
+
+    // Almacenar el token de recuperación en la base de datos
+    await pool.query(
+      'INSERT INTO RecuperacionesCuenta (usuario_id, token, expiracion) VALUES (?, ?, ?)',
+      [usuario_id, token, expiracion]
+    );
+
+    // Configuración del correo
+    const mailOptions = {
+      from: "dgst1704@gmail.com",
+      to: correo,
+      subject: "Recuperación de cuenta",
+      text: `Solicitaste recuperar tu cuenta. Usa el siguiente código para restablecer tu contraseña: ${token}. Este código expirará en 15 minutos.`,
+    };
+
+    // Enviar el correo
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({ message: "Correo enviado con el código de recuperación" });
+  } catch (error) {
+    console.error("Error al enviar el correo:", error);
+    res.status(500).json({ error: "No se pudo enviar el correo o almacenar el token" });
+  }
+};
+
+export const verificarCodigoRecuperacion = async (req, res) => {
+  const { correo, token } = req.body;
+
+  if (!correo || !token) {
+    return res.status(400).json({ error: "Faltan datos: correo o token" });
+  }
+
+  try {
+    // Verificar si el correo existe
+    const [result] = await pool.query('SELECT id FROM Usuarios WHERE correo = ?', [correo]);
+
+    if (result.length === 0) {
+      return res.status(404).json({ error: "Correo no encontrado" });
+    }
+
+    const usuario_id = result[0].id;
+
+    // Buscar el token en la base de datos
+    const [tokenResult] = await pool.query(
+      'SELECT * FROM RecuperacionesCuenta WHERE usuario_id = ? AND token = ?',
+      [usuario_id, token]
+    );
+
+    if (tokenResult.length === 0) {
+      return res.status(400).json({ error: "Código de recuperación no válido" });
+    }
+
+    const recuperacion = tokenResult[0];
+
+    // Verificar si el token ha expirado
+    const now = new Date();
+    if (now > new Date(recuperacion.expiracion)) {
+      return res.status(400).json({ error: "El código ha expirado" });
+    }
+
+    // El código es válido y no ha expirado
+    res.status(200).json({ message: "Código de recuperación válido" });
+  } catch (error) {
+    console.error("Error al verificar el código:", error);
+    res.status(500).json({ error: "No se pudo verificar el código" });
+  }
+};
+
+export const cambiarContrasena = async (req, res) => {
+  const { correo, token, nuevaContrasena } = req.body;
+
+  if (!correo || !token || !nuevaContrasena) {
+    return res.status(400).json({ error: "Faltan datos: correo, token o nueva contraseña" });
+  }
+
+  try {
+    // Verificar si el correo existe
+    const [result] = await pool.query('SELECT id FROM Usuarios WHERE correo = ?', [correo]);
+
+    if (result.length === 0) {
+      return res.status(404).json({ error: "Correo no encontrado" });
+    }
+
+    const usuario_id = result[0].id;
+
+    // Buscar el token en la base de datos
+    const [tokenResult] = await pool.query(
+      'SELECT * FROM RecuperacionesCuenta WHERE usuario_id = ? AND token = ?',
+      [usuario_id, token]
+    );
+
+    if (tokenResult.length === 0) {
+      return res.status(400).json({ error: "Código de recuperación no válido" });
+    }
+
+    const recuperacion = tokenResult[0];
+
+    // Verificar si el token ha expirado
+    const now = new Date();
+    if (now > new Date(recuperacion.expiracion)) {
+      return res.status(400).json({ error: "El código ha expirado" });
+    }
+
+    // Actualizar la contraseña en la base de datos sin encriptar
+    await pool.query('UPDATE Usuarios SET contraseña = ? WHERE id = ?', [nuevaContrasena, usuario_id]);
+
+    // Eliminar el token de recuperación ya que ya se usó
+    await pool.query('DELETE FROM RecuperacionesCuenta WHERE id = ?', [recuperacion.id]);
+
+    res.status(200).json({ message: "Contraseña actualizada correctamente" });
+  } catch (error) {
+    console.error("Error al cambiar la contraseña:", error);
+    res.status(500).json({ error: "No se pudo cambiar la contraseña" });
+  }
+};
