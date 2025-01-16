@@ -538,7 +538,7 @@ export const solicitarRecuperacionCuenta = async (req, res) => {
 
     // Almacenar el token de recuperación en la base de datos
     await pool.query(
-      'INSERT INTO RecuperacionesCuenta (usuario_id, token, expiracion) VALUES (?, ?, ?)',
+      'INSERT INTO recuperacionesCuenta (usuario_id, token, expiracion) VALUES (?, ?, ?)',
       [usuario_id, token, expiracion]
     );
 
@@ -579,7 +579,7 @@ export const verificarCodigoRecuperacion = async (req, res) => {
 
     // Buscar el token en la base de datos
     const [tokenResult] = await pool.query(
-      'SELECT * FROM RecuperacionesCuenta WHERE usuario_id = ? AND token = ?',
+      'SELECT * FROM recuperacionesCuenta WHERE usuario_id = ? AND token = ?',
       [usuario_id, token]
     );
 
@@ -622,7 +622,7 @@ export const cambiarContrasena = async (req, res) => {
 
     // Buscar el token en la base de datos
     const [tokenResult] = await pool.query(
-      'SELECT * FROM RecuperacionesCuenta WHERE usuario_id = ? AND token = ?',
+      'SELECT * FROM recuperacionesCuenta WHERE usuario_id = ? AND token = ?',
       [usuario_id, token]
     );
 
@@ -642,7 +642,7 @@ export const cambiarContrasena = async (req, res) => {
     await pool.query('UPDATE Usuarios SET contraseña = ? WHERE id = ?', [nuevaContrasena, usuario_id]);
 
     // Eliminar el token de recuperación ya que ya se usó
-    await pool.query('DELETE FROM RecuperacionesCuenta WHERE id = ?', [recuperacion.id]);
+    await pool.query('DELETE FROM recuperacionesCuenta WHERE id = ?', [recuperacion.id]);
 
     res.status(200).json({ message: "Contraseña actualizada correctamente" });
   } catch (error) {
