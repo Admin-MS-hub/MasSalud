@@ -26,10 +26,10 @@ routerAG.get('/getClinicaId/:id',verificarToken,getClinicaId)
 routerAG.get('/LinkCodigo/:id', verificarToken,LinkCodigoId)
 
 // Ruta para enviar el código
-routerAG.post('/enviar-codigo', enviarCodigoCorreo);
+routerAG.post('/enviar-codigo', verificarToken, enviarCodigoCorreo);
 
 // Ruta para verificar el código
-routerAG.post('/verificar-codigo', verificarCodigo);
+routerAG.post('/verificar-codigo', verificarToken, verificarCodigo);
 
 // Ruta para solicitar la recuperación de cuenta
 routerAG.post('/solicitar-recuperacion', solicitarRecuperacionCuenta);
