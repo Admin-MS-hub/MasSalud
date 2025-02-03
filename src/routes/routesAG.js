@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { cambiarContrasena, crearUsuarioYClinica, deleteClinica, editClinica, enviarCodigoCorreo, getClinica, getClinicaId, LinkCodigoId, postClinica, solicitarRecuperacionCuenta, Tarifas, uploadImages, uploadPdf, verificarCodigo, verificarCodigoRecuperacion } from "../controller/AgController.js";
+import { cambiarContrasena, crearUsuarioYClinica, deleteClinica, editClinica, enviarCodigoCorreo, getClinica, getClinicaId, LinkCodigoId, LinkDemoCodigoId, postClinica, solicitarRecuperacionCuenta, Tarifas, uploadImages, uploadPdf, verificarCodigo, verificarCodigoRecuperacion } from "../controller/AgController.js";
 import { upload, verificarToken } from "../controller/UserController.js";
 
 const routerAG = Router();
@@ -24,6 +24,8 @@ routerAG.post('/crearUsuarioYClinica',verificarToken, crearUsuarioYClinica)
 routerAG.get('/getClinicaId/:id',verificarToken,getClinicaId)
 
 routerAG.get('/LinkCodigo/:id', verificarToken,LinkCodigoId)
+
+routerAG.get('/LinkCodigoDemo/:id', verificarToken,LinkDemoCodigoId)
 
 // Ruta para enviar el código
 routerAG.post('/enviar-codigo', verificarToken, enviarCodigoCorreo);

@@ -423,6 +423,28 @@ export const LinkCodigoId = async (req, res) => {
   }
 };
 
+export const LinkDemoCodigoId = async (req, res) => {
+  const { id } = req.params;
+  const query = 'SELECT codigo FROM Usuarios WHERE id = ?';
+  
+  try {
+    const [results] = await pool.query(query, [id]);
+
+    // Asegurarse de que haya resultados
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    const codigo = results[0].codigo; // Obtener el código del usuario
+    const Link = `https://darkgrey-ostrich-727682.hostingersite.com/Register?ref=${codigo}`;
+    
+    res.status(200).json({ link: Link }); // Enviar el link en la respuesta
+  } catch (err) {
+    console.error('Error al obtener el código:', err);
+    res.status(500).json({ message: 'Error al obtener el código' });
+  }
+};
+
 const transporter = nodemailer.createTransport({
   service: "Gmail", 
   auth: {
