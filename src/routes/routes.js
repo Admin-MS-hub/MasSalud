@@ -31,7 +31,7 @@ router.post('/login', loginUsuario);
 
 router.get('/usuarios/:id', verificarToken, getUsuarioById)
 
-router.post('/roles', verificarToken, postRol);;
+router.post('/roles', verificarToken, postRol);
 
 router.put('/CambioRol/:id', verificarToken, getAfiliadosPorUsuarioId);
 
