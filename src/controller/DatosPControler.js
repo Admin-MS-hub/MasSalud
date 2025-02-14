@@ -404,51 +404,93 @@ export const CambiarEstados = async (req, res) => {
   const { id } = req.params;
   const Estado = 'Activo'; // Asignar el valor 'Activo' directamente
   const rol_id = '4'
+  const estado_solicitud = 1; // Mantener el valor fijo
 
   // Validación del ID
   if (!id || isNaN(id)) {
     return res.status(400).json({ message: 'El ID es requerido y debe ser un número.' });
   }
 
-  const query = 'UPDATE Usuarios SET Estado = ?, rol_id = ? WHERE id = ?';
+  const query = 'UPDATE Usuarios SET Estado = ?, rol_id = ?, estado_solicitud = ? WHERE id = ?';
   
   try {
-    const [results] = await pool.query(query, [Estado,rol_id, id]); // Primero el Estado y luego el ID en la query
-    if (results.affectedRows > 0) {
-      res.status(200).json({ message: 'Estado actualizado correctamente.' });
-    } else {
-      res.status(404).json({ message: 'Usuario no encontrado.' });
-    }
+    const [results] = await pool.query(query, [Estado,rol_id,estado_solicitud, id]); // Primero el Estado y luego el ID en la query
+    res.status(200).json({ message: 'Estado actualizado correctamente.' });
   } catch (err) {
     console.error('Error:', err);
     res.status(500).json({ message: 'Error al actualizar el estado.' });
   }
 };
 
+// Función que genera el código basado en dni, nombres y apellidos
+const generarCodigo = (dni, nombres, apellidos) => {
+  const primerosDni = dni ? dni.substring(0, 3) : '000';
+  const primerasLetrasNombre = nombres ? nombres.substring(0, 2).toUpperCase() : 'NA';
+  const primerasLetrasApellido = apellidos ? apellidos.substring(0, 3).toUpperCase() : 'NA';
+  
+  let codigo = primerosDni + primerasLetrasNombre + primerasLetrasApellido;
+  return codigo.padEnd(8, '0');
+};
 
 export const CambiarEstadoPR = async (req, res) => {
   const { id } = req.params;
   const EstadoPr = 'Activo'; // Asignar el valor 'Activo' directamente
-    const rol_id = '3'
+  const rol_id = '3';
+  const estado_solicitud = 1; // Mantener el valor fijo
 
   // Validación del ID
   if (!id || isNaN(id)) {
     return res.status(400).json({ message: 'El ID es requerido y debe ser un número.' });
   }
 
-  const query = 'UPDATE Usuarios SET EstadoPr = ?, rol_id = ? WHERE id = ?';
-  
+  // Comprobar si el código es válido antes de realizar la actualización
   try {
-    const [results] = await pool.query(query, [EstadoPr,rol_id, id]); // Primero el Estado y luego el ID en la query
-    if (results.affectedRows > 0) {
-      res.status(200).json({ message: 'Estado actualizado correctamente.' });
-    } else {
-      res.status(404).json({ message: 'Usuario no encontrado.' });
+    // Obtener los datos del usuario (dni, nombres, apellidos)
+    const [usuario] = await pool.query('SELECT dni, nombres, apellidos FROM Usuarios WHERE id = ?', [id]);
+
+    // Si el usuario no existe
+    if (usuario.length === 0) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
     }
+
+    const { dni, nombres, apellidos } = usuario[0];
+
+    // Generar el código inicial basado en dni, nombres y apellidos
+    let codigo = generarCodigo(dni, nombres, apellidos);
+
+    // Verificar si el código ya existe en la base de datos
+    const [verificacion] = await pool.query('SELECT COUNT(*) AS count FROM Usuarios WHERE codigo = ?', [codigo]);
+
+    // Si ya existe, generamos uno nuevo con un número aleatorio en lugar de sufijo secuencial
+    if (verificacion[0].count > 0) {
+      let nuevoCodigo;
+      let verificacionNuevo;
+
+      do {
+        // Generar un número aleatorio para el sufijo
+        const sufijoAleatorio = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        nuevoCodigo = `${codigo.substring(0, 6)}${sufijoAleatorio}`;
+
+        // Verificamos si el nuevo código ya existe
+        const [verificacionNuevoResult] = await pool.query('SELECT COUNT(*) AS count FROM Usuarios WHERE codigo = ?', [nuevoCodigo]);
+        verificacionNuevo = verificacionNuevoResult[0].count;
+
+      } while (verificacionNuevo > 0); // Continuamos hasta que encontremos un código único
+
+      // Asignar el nuevo código generado
+      codigo = nuevoCodigo;
+    }
+
+    // Realizar la actualización del estado y código en la base de datos
+    const query = 'UPDATE Usuarios SET EstadoPr = ?, codigo = ?, rol_id = ?, estado_solicitud = ? WHERE id = ?';
+    const [results] = await pool.query(query, [EstadoPr, codigo, rol_id, estado_solicitud, id]);
+
+    res.status(200).json({ message: 'Estado y código actualizados correctamente.'});
   } catch (err) {
     console.error('Error:', err);
-    res.status(500).json({ message: 'Error al actualizar el estado.' });
+    res.status(500).json({ message: 'Error al actualizar el estado y generar el código.' });
   }
 };
+
 
 

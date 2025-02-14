@@ -181,72 +181,38 @@ export const Password = async (req, res) => {
     }
 };
 
-export const GenCode = async (req, res) => {
+export const SolicitudPromotor = async (req, res) => {
     const { id } = req.params; // Obtener el ID desde los parámetros de la URL
-    const { rol_id } = req.body; // Obtener el rol_id desde el cuerpo de la solicitud
+    const estado_solicitud = 3; // Mantener el valor fijo
 
-    // Verificar que los parámetros sean válidos
-    if (!id || isNaN(id)) {
-        return res.status(400).json({ message: 'El ID es requerido y debe ser un número.' });
-    }
-
-    if (!rol_id) {
-        return res.status(400).json({ message: 'El rol_id es requerido.' });
-    }
+    const query = `UPDATE Usuarios SET estado_solicitud = ? WHERE id = ?`;
 
     try {
-        // Obtener los datos del usuario (dni, nombres, apellidos)
-        const [usuario] = await pool.query('SELECT dni, nombres, apellidos FROM Usuarios WHERE id = ?', [id]);
-
-        // Si el usuario no existe
-        if (usuario.length === 0) {
-            return res.status(404).json({ message: 'Usuario no encontrado.' });
-        }
-
-        const { dni, nombres, apellidos } = usuario[0];
-
-        // Generar el código inicial basado en dni, nombres y apellidos
-        let codigo = generarCodigo(dni, nombres, apellidos);
-
-        // Verificar si el código ya existe en la base de datos
-        const [verificacion] = await pool.query('SELECT COUNT(*) AS count FROM Usuarios WHERE codigo = ?', [codigo]);
-
-        // Si ya existe, generamos uno nuevo con un número aleatorio en lugar de sufijo secuencial
-        if (verificacion[0].count > 0) {
-            let nuevoCodigo;
-            let verificacionNuevo;
-
-            do {
-                // Generar un número aleatorio para el sufijo
-                const sufijoAleatorio = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-                nuevoCodigo = `${codigo.substring(0, 6)}${sufijoAleatorio}`;
-
-                // Verificamos si el nuevo código ya existe
-                const [verificacionNuevoResult] = await pool.query('SELECT COUNT(*) AS count FROM Usuarios WHERE codigo = ?', [nuevoCodigo]);
-                verificacionNuevo = verificacionNuevoResult[0].count;
-
-            } while (verificacionNuevo > 0); // Continuamos hasta que encontremos un código único
-
-            // Asignar el nuevo código generado
-            codigo = nuevoCodigo;
-        }
-
-        // Actualizamos el usuario con el nuevo código y rol_id
-        const query = 'UPDATE Usuarios SET codigo = ?, rol_id = ? WHERE id = ?';
-        const [response] = await pool.query(query, [codigo, rol_id, id]);
-
-        if (response.affectedRows === 0) {
-            return res.status(404).json({ message: 'No se actualizó ningún usuario. Verifique el ID.' });
-        }
-
-        // Respuesta exitosa
-        res.status(200).json({ message: 'Código y rol actualizados correctamente', codigo });
-
+        // Ejecutar la consulta
+        const result = await pool.query(query, [estado_solicitud, id]);
+        res.status(200).json({ message: 'Datos actualizados correctamente' });
     } catch (error) {
-        console.error('Error al generar y actualizar código:', error);
-        res.status(500).json({ message: 'Error al generar o actualizar el código', error });
+        console.error('Error en la solicitud', error);
+        res.status(500).json({ message: 'Error en la solicitud', error });
     }
 };
+
+export const SolicitudUsuario = async (req, res) => {
+    const { id } = req.params; // Obtener el ID desde los parámetros de la URL
+    const estado_solicitud = 2; // Mantener el valor fijo
+
+    const query = `UPDATE Usuarios SET estado_solicitud = ? WHERE id = ?`;
+
+    try {
+        // Ejecutar la consulta
+        const result = await pool.query(query, [estado_solicitud, id]);
+        res.status(200).json({ message: 'Datos actualizados correctamente' });
+    } catch (error) {
+        console.error('Error en la solicitud', error);
+        res.status(500).json({ message: 'Error en la solicitud', error });
+    }
+};
+
 
 // Función que genera el código basado en dni, nombres y apellidos
 const generarCodigo = (dni, nombres, apellidos) => {
