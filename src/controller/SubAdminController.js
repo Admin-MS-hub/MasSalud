@@ -214,15 +214,6 @@ export const SolicitudUsuario = async (req, res) => {
 };
 
 
-// Función que genera el código basado en dni, nombres y apellidos
-const generarCodigo = (dni, nombres, apellidos) => {
-    const primerosDni = dni ? dni.substring(0, 3) : '000';
-    const primerasLetrasNombre = nombres ? nombres.substring(0, 2).toUpperCase() : 'NA';
-    const primerasLetrasApellido = apellidos ? apellidos.substring(0, 3).toUpperCase() : 'NA';
-    
-    let codigo = primerosDni + primerasLetrasNombre + primerasLetrasApellido;
-    return codigo.padEnd(8, '0');
-};
 
 export const getGananciaTotalGeneral = async (req, res) => {
     try {

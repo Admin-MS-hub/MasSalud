@@ -366,6 +366,7 @@ export const getEstadosUser = async (req, res) => {
       u.id,
       u.dni, 
       u.nombres, 
+      u.estado_solicitud,
       u.apellidos, 
       u.fecha_inscripcion, 
       u.codigo,
