@@ -870,6 +870,7 @@ export const me = async (req, res) => {
                 u.apellidos, 
                 u.fotoPerfil, 
                 u.clinica_id, 
+                u.estado_solicitud,
                 r.nombre AS rol,
                 v.id AS vistaId, 
                 v.nombre AS vistaNombre, 
