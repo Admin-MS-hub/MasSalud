@@ -861,7 +861,7 @@ export const me = async (req, res) => {
     const user = req.usuario; // Los datos del usuario decodificados desde el JWT
 
     try {
-        // Consultar la base de datos para obtener la información del usuario, incluyendo rol_id, dirección y teléfono
+        // Consultar la base de datos para obtener la información del usuario, incluyendo rol_id, dirección, teléfono, y estado_solicitud
         const [rows] = await pool.query(`
             SELECT 
                 u.id AS usuarioId, 
@@ -870,7 +870,7 @@ export const me = async (req, res) => {
                 u.apellidos, 
                 u.fotoPerfil, 
                 u.clinica_id, 
-                u.estado_solicitud,
+                u.estado_solicitud,   -- Agregar estado_solicitud
                 r.nombre AS rol,
                 v.id AS vistaId, 
                 v.nombre AS vistaNombre, 
@@ -906,7 +906,7 @@ export const me = async (req, res) => {
             ruta: row.ruta
         }));
 
-        // Devolver los datos del usuario, las vistas, estado, estadoPr, código, rol_id, dirección y teléfono
+        // Devolver los datos del usuario, las vistas, estado, estadoPr, código, rol_id, dirección, teléfono y estado_solicitud
         res.status(200).json({
             id: usuario.usuarioId,
             correo: usuario.correo,
@@ -921,6 +921,7 @@ export const me = async (req, res) => {
             codigo: usuario.codigo || 'No disponible', 
             direccion: usuario.direccion || 'No disponible',  // Incluir dirección
             telefono: usuario.telefono || 'No disponible',  // Incluir teléfono
+            estado_solicitud: usuario.estado_solicitud || 'No disponible',  // Incluir estado_solicitud
             vistas: vistas 
         });
 
@@ -929,6 +930,7 @@ export const me = async (req, res) => {
         res.status(500).json({ message: 'Error al obtener los datos del usuario' });
     }
 }
+
 
 export const crearUsuarioCode = async (req, res) => {
     const {
