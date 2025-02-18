@@ -441,6 +441,7 @@ export const loginUsuario = async (req, res) => {
                 u.direccion,
                 u.telefono,
                 u.rol_id,
+                u.estado_solicitud,
                 r.nombre AS rol,
                 v.id AS vistaId, 
                 v.nombre AS vistaNombre, 
@@ -523,6 +524,7 @@ export const loginUsuario = async (req, res) => {
                 estadoPr: usuario.EstadoPr,
                 codigo: usuario.codigo,  // Incluyendo el código
                 rol: usuario.rol,
+                estado_solicitud:usuario.estado_solicitud,
                 rol_id: usuario.rol_id, // Agregado rol_id
                 direccion: usuario.direccion, // Agregado direccion
                 telefono: usuario.telefono, // Agregado telefono
